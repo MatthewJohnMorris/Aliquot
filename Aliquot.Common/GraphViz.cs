@@ -8,10 +8,22 @@ using System.Threading.Tasks;
 
 namespace Aliquot.Common
 {
+  /// <summary>
+  /// Routines to interact with GraphViz, the open source application for producing images of
+  /// (directed or undirected) graphs.
+  /// </summary>
   public class GraphViz
   {
+    /// <summary>
+    /// File in which to store the location of dot.exe: this is written to the same location as the
+    /// calling assembly.
+    /// </summary>
     public const string FileNameGvDotLocation = "aliquot.gvdotlocation";
 
+    /// <summary>
+    /// Interactive function to list all instances of dot.exe off ProgramFilesX86 and to let the 
+    /// user select one to use for graphing.
+    /// </summary>
     public static void FindDotExe()
     {
       var pathProgramFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
@@ -45,6 +57,11 @@ namespace Aliquot.Common
       }
     }
 
+    /// <summary>
+    /// Run dot.exe to produce an image from a graph file.
+    /// </summary>
+    /// <param name="gvOut">Location of input (without extension - we assume the extension is .gv)</param>
+    /// <param name="gvFileType">Type of image (svg is often a good choice)</param>
     public static void RunDotExe(string gvOut, string gvFileType)
     {
       if (!System.IO.File.Exists(GraphViz.FileNameGvDotLocation))
@@ -53,9 +70,8 @@ namespace Aliquot.Common
       }
       using (var r = new StreamReader(GraphViz.FileNameGvDotLocation))
       {
-        string fileType = "svg";
         var gvdotLocation = r.ReadLine();
-        string arguments = "-T" + fileType + " " + gvOut + ".gv -o " + gvOut + "." + fileType;
+        string arguments = "-T" + gvFileType + " " + gvOut + ".gv -o " + gvOut + "." + gvFileType;
 
         ProcessStartInfo startInfo = new ProcessStartInfo();
         startInfo.CreateNoWindow = false;
