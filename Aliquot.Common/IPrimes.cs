@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Numerics;
 
-namespace ConsoleAliquot
+namespace Aliquot.Common
 {
   public interface IPrimes
   {

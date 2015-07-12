@@ -2,7 +2,7 @@
 using System.IO.Compression;
 using System.Diagnostics;
 
-namespace ConsoleAliquot
+namespace Aliquot.Common
 {
   class Utilities
   {

@@ -4,16 +4,15 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{3B8EBE44-7656-49FA-9750-E0511C8B3C09}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <ProjectGuid>{DCF5F7EF-B8CA-4382-BB30-EAB98B13B0E2}</ProjectGuid>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ConsoleAliquot</RootNamespace>
-    <AssemblyName>ConsoleAliquot</AssemblyName>
+    <RootNamespace>Aliquot.Common</RootNamespace>
+    <AssemblyName>Aliquot.Common</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -23,7 +22,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -34,7 +32,6 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Management" />
     <Reference Include="System.Numerics" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -43,18 +40,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CommandLineParser.cs" />
-    <Compile Include="Program.cs" />
+    <Compile Include="AliquotDatabase.cs" />
+    <Compile Include="AliquotSuccessor.cs" />
+    <Compile Include="GraphViz.cs" />
+    <Compile Include="IPrimes.cs" />
+    <Compile Include="PrimeEnumerator.cs" />
+    <Compile Include="PrimeFactorisation.cs" />
+    <Compile Include="PrimesFromFile.cs" />
+    <Compile Include="PrimesSieveErat.cs" />
+    <Compile Include="PrimesTrialDivision.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Aliquot.Common\Aliquot.Common.csproj">
-      <Project>{dcf5f7ef-b8ca-4382-bb30-eab98b13b0e2}</Project>
-      <Name>Aliquot.Common</Name>
-    </ProjectReference>
+    <Compile Include="Utilities.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 
-namespace ConsoleAliquot
+namespace Aliquot.Common
 {
   /// <summary>
   /// Factorise a number into prime factors

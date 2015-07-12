@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 
-namespace ConsoleAliquot
+namespace Aliquot.Common
 {
-  class PrimesSieveErat : IPrimes
+  public class PrimesSieveErat : IPrimes
   {
     int myMaxPrime;
     List<int> myPrimes;

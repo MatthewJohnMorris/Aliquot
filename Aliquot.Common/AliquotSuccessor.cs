@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Numerics;
 
-namespace ConsoleAliquot
+namespace Aliquot.Common
 {
-  class AliquotSuccessor
+  public class AliquotSuccessor
   {
     public BigInteger Current { get; private set; }
     public BigInteger Successor { get; private set; }

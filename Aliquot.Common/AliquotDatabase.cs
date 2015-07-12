@@ -6,9 +6,9 @@ using System.IO;
 using System.IO.Compression;
 using System.Numerics;
 
-namespace ConsoleAliquot
+namespace Aliquot.Common
 {
-  class AliquotDatabase
+  public class AliquotDatabase
   {
     public Dictionary<BigInteger, AliquotSuccessor> Links { get; private set; }
     public Dictionary<string, string> CreationProperties { get; private set; }

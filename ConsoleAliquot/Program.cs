@@ -7,7 +7,9 @@ using System.Management;
 using System.Text;
 using System.Threading.Tasks;
 using System.Numerics;
+
 using OptionName = ConsoleAliquot.CommandLineParser.OptionName;
+using Aliquot.Common;
 
 namespace ConsoleAliquot
 {

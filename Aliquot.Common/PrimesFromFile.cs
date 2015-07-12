@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 
-namespace ConsoleAliquot
+namespace Aliquot.Common
 {
-  class PrimesFromFile : IPrimes
+  public class PrimesFromFile : IPrimes
   {
     public enum ShowLoadProgress { Yes, No }
     private readonly ShowLoadProgress myShowLoadProgress;

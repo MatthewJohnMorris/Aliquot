@@ -6,9 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ConsoleAliquot
+namespace Aliquot.Common
 {
-  class GraphViz
+  public class GraphViz
   {
     public const string FileNameGvDotLocation = "aliquot.gvdotlocation";
 

@@ -5,10 +5,12 @@ using System.ComponentModel;
 using System.Linq;
 using System.Numerics;
 
-namespace ConsoleAliquot
+namespace Aliquot.Common
 {
   /// <summary>
   /// Supply an unending series of Prime Numbers
+  /// 
+  /// This was useful when first getting things up and running, but trial division is very slow!
   /// </summary>
   public class PrimesTrialDivision : IPrimes
   {
