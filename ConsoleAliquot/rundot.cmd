@@ -1,0 +1,1 @@
+"C:\Program Files (x86)\Graphviz2.38\bin\dot" -T%2 %1.gv -o %1.%2

@@ -1,0 +1,2 @@
+ConsoleAliquot.exe -makeprimes
+pause
