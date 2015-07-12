@@ -32,6 +32,9 @@ namespace ConsoleAliquot
     {
       Trace.Listeners.Add(new ConsoleTraceListener());
 
+      Console.Out.WriteLine(Int32.MaxValue - 1);
+      return;
+
       CommandLineParser clp = new CommandLineParser(args);
       string primesFile = clp.OptionValue(OptionName.PrimesFile, "primes.bin");
       string adbName = clp.OptionValue(OptionName.AdbFile, "aliquot.adb");

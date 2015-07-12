@@ -9,11 +9,22 @@ namespace Aliquot.Common.Test
     private IPrimes AssembleFromFile(int maxPrime)
     {
       string tempFileName = System.IO.Path.GetTempFileName();
-      var p = new PrimesSieveErat(maxPrime);
-      p.WriteToFile(tempFileName);
-      var p2 = new PrimesFromFile(tempFileName, PrimesFromFile.ShowLoadProgress.No);
-      System.IO.File.Delete(tempFileName);
-      return p2;
+      IPrimes ret = null;
+      try
+      {
+        var p = new PrimesSieveErat(maxPrime);
+        p.WriteToFile(tempFileName);
+        ret = new PrimesFromFile(tempFileName, PrimesFromFile.ShowLoadProgress.No);
+      }
+      finally
+      {
+        try
+        {
+          System.IO.File.Delete(tempFileName);
+        }
+        catch (Exception) { }
+      }
+      return ret;
     }
 
     [TestMethod]
