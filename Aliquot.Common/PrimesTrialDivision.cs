@@ -14,7 +14,7 @@ namespace Aliquot.Common
   /// 
   /// Real work requires us using a list of primes prepared by PrimesSieveErat, loaded up by PrimesFromFile.
   /// </summary>
-  public class PrimesTrialDivision : IPrimes
+  internal class PrimesTrialDivision : IPrimes
   {
     private List<BigInteger> myPrimes;
     private List<BigInteger> myPrimesSq;

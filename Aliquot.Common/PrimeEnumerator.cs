@@ -8,7 +8,7 @@ namespace Aliquot.Common
   /// <summary>
   /// Allow enumeration of all Prime Numbers
   /// </summary>
-  public class PrimesEnumerator : IEnumerator<BigInteger>
+  internal class PrimesEnumerator : IEnumerator<BigInteger>
   {
     private readonly IPrimes myPrimes;
     private int myCurrentIndex;

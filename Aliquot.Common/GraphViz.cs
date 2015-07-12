@@ -60,13 +60,13 @@ namespace Aliquot.Common
     /// <summary>
     /// Run dot.exe to produce an image from a graph file.
     /// </summary>
-    /// <param name="gvOut">Location of input (without extension - we assume the extension is .gv)</param>
+    /// <param name="gvOut">Location of input and output (without extension - we assume the input extension is .gv)</param>
     /// <param name="gvFileType">Type of image (svg is often a good choice)</param>
     public static void RunDotExe(string gvOut, string gvFileType)
     {
       if (!System.IO.File.Exists(GraphViz.FileNameGvDotLocation))
       {
-        throw new ApplicationException("Can't generate GraphVis, as there is no aliquot.gvdotlocation file - try running with -gvfinddot");
+        throw new ApplicationException(string.Format("Can't generate GraphVis, as there is no {0} file - try running with -gvfinddot", GraphViz.FileNameGvDotLocation));
       }
       using (var r = new StreamReader(GraphViz.FileNameGvDotLocation))
       {

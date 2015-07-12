@@ -102,17 +102,18 @@ namespace ConsoleAliquot
         Console.Out.WriteLine("");
         Console.Out.WriteLine("Routines to investigate Aliquot Sequences");
         Console.Out.WriteLine("");
-        Console.Out.WriteLine("AdbFile=FILENAME (default aliquot.adb) - name of ADB file");
-        Console.Out.WriteLine("AdbLimit=MAXTOPROCESS (default 100000) - Higest number to look at");
-        Console.Out.WriteLine("ExportTable - write table of numbers in ADB");
-        Console.Out.WriteLine("GvFindDot - discover dot.exe");
-        Console.Out.WriteLine("GvTree=TREEBASE (default 3)- make Gv tree");
-        Console.Out.WriteLine("GvOut - set output file for Gv functions");
-        Console.Out.WriteLine("Init - create all initial setup");
-        Console.Out.WriteLine("MakeAdb - create ADB file");
-        Console.Out.WriteLine("MakePrimes - create Primes file");
-        Console.Out.WriteLine("PrimesFile=FILENAME (default primes.bin) - name of Primes file");
-        Console.Out.WriteLine("ShowAdb - dump details of ADB file");
+        Console.Out.WriteLine("Switches:");
+        Console.Out.WriteLine("-AdbFile=FILENAME      ... name of ADB file (default aliquot.adb)");
+        Console.Out.WriteLine("-AdbLimit=MAXTOPROCESS ... Highest number to look at (default 100000)");
+        Console.Out.WriteLine("-ExportTable           ... write table of numbers in ADB");
+        Console.Out.WriteLine("-GvFindDot             ... discover dot.exe");
+        Console.Out.WriteLine("-GvTree=TREEBASE       ... make Gv tree (default 3)");
+        Console.Out.WriteLine("-GvOut                 ... set output file for Gv functions");
+        Console.Out.WriteLine("-Init                  ... create all initial setup");
+        Console.Out.WriteLine("-MakeAdb               ... create ADB file");
+        Console.Out.WriteLine("-MakePrimes            ... create Primes file");
+        Console.Out.WriteLine("-PrimesFile=FILENAME   ... name of Primes file (default primes.bin)");
+        Console.Out.WriteLine("-ShowAdb               ... dump details of ADB file");
       }
 #if false
       var ptd = new PrimesTrialDivision();
