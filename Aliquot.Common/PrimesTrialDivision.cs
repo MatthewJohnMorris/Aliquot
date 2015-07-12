@@ -11,6 +11,8 @@ namespace Aliquot.Common
   /// Supply an unending series of Prime Numbers
   /// 
   /// This was useful when first getting things up and running, but trial division is very slow!
+  /// 
+  /// Real work requires us using a list of primes prepared by PrimesSieveErat, loaded up by PrimesFromFile.
   /// </summary>
   public class PrimesTrialDivision : IPrimes
   {
@@ -30,6 +32,7 @@ namespace Aliquot.Common
       myPrimes.Add(prime);
       myPrimesSq.Add(prime * prime);
     }
+    // IPrimes interface
     public BigInteger this[int index]
     {
       get
