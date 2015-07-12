@@ -120,53 +120,32 @@ namespace Aliquot.Common
 
     public BigInteger SumAllProperDivisors()
     {
-      // Get the factors and set up loop counters
+      BigInteger result = 1;
+      BigInteger n = 1;
+
       var factorsAndPowers = myFactorsAndPowers;
       int numFactors = factorsAndPowers.Count;
-      var loops = new List<int>();
       for (int i = 0; i < numFactors; ++i)
       {
-        loops.Add(0);
-      }
-
-      // Build all divisors and get their sum
-      BigInteger result = 0;
-      bool atEnd = false;
-      BigInteger term = 1;
-      while (!atEnd)
-      {
-        // Get the term to add to the sum
-        term = 1;
-        for (int i = 0; i < numFactors; ++i)
+        // Where we have p^n as a factor, build (1 + p + ... + p^n)
+        BigInteger termSum = 1;
+        BigInteger factor = factorsAndPowers[i].Factor;
+        BigInteger currentFactorPower = 1;
+        int power = factorsAndPowers[i].Power;
+        for(int j = 1; j <= power; ++j)
         {
-          BigInteger factor = factorsAndPowers[i].Factor;
-          int power = loops[i];
-          BigInteger contribution = BigInteger.Pow(factor, power);
-          term *= contribution;
+          currentFactorPower *= factor;
+          termSum += currentFactorPower;
         }
-        result += term;
-
-        // Increment our loop counters and see if we have hit the end
-        int loopIndex = 0;
-        while (loopIndex < numFactors)
-        {
-          // Increment loop
-          loops[loopIndex]++;
-          // Exit if this loop has not overflowed
-          if (loops[loopIndex] <= factorsAndPowers[loopIndex].Power)
-          {
-            break;
-          }
-          // Otherwise, reset this loop to zero and move to the next one
-          loops[loopIndex] = 0;
-          loopIndex++;
-        }
-        atEnd = (loopIndex == numFactors);
+        // Result is the product of these terms
+        result *= termSum;
+        // We also construct n as we go
+        n *= currentFactorPower;
       }
 
       // We summed all divisors including n itself: remove n for the sum of all *proper*
       // divisors, which is the Aliquot number.
-      result -= term;
+      result -= n;
 
       return result;
     }
