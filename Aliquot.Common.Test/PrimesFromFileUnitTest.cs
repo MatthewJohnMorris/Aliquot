@@ -14,7 +14,7 @@ namespace Aliquot.Common.Test
       {
         var p = new PrimesSieveErat(maxPrime);
         p.WriteToFile(tempFileName);
-        ret = new PrimesFromFile(tempFileName, PrimesFromFile.ShowLoadProgress.No);
+        ret = new PrimesFromFile(tempFileName);
       }
       finally
       {

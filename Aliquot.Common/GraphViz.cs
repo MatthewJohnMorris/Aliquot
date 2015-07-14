@@ -57,6 +57,23 @@ namespace Aliquot.Common
       }
     }
 
+    public static bool HasDotExeLocation()
+    {
+      return System.IO.File.Exists(GraphViz.FileNameGvDotLocation);
+    }
+    public static string GetDotExeLocation()
+    {
+      if (!System.IO.File.Exists(GraphViz.FileNameGvDotLocation))
+      {
+        throw new ApplicationException(string.Format("No GvDot file present at {0}", GraphViz.FileNameGvDotLocation));
+      }
+      using (var r = new StreamReader(GraphViz.FileNameGvDotLocation))
+      {
+        var gvdotLocation = r.ReadLine();
+        return gvdotLocation;
+      }
+    }
+
     /// <summary>
     /// Run dot.exe to produce an image from a graph file.
     /// </summary>
@@ -64,38 +81,31 @@ namespace Aliquot.Common
     /// <param name="gvFileType">Type of image (svg is often a good choice)</param>
     public static void RunDotExe(string gvOut, string gvFileType)
     {
-      if (!System.IO.File.Exists(GraphViz.FileNameGvDotLocation))
-      {
-        throw new ApplicationException(string.Format("Can't generate GraphVis, as there is no {0} file - try running with -gvfinddot", GraphViz.FileNameGvDotLocation));
-      }
-      using (var r = new StreamReader(GraphViz.FileNameGvDotLocation))
-      {
-        var gvdotLocation = r.ReadLine();
-        string arguments = "-T" + gvFileType + " " + gvOut + ".gv -o " + gvOut + "." + gvFileType;
+      var gvdotLocation = GetDotExeLocation();
+      string arguments = "-T" + gvFileType + " " + gvOut + ".gv -o " + gvOut + "." + gvFileType;
 
-        ProcessStartInfo startInfo = new ProcessStartInfo();
-        startInfo.CreateNoWindow = false;
-        startInfo.UseShellExecute = false;
-        startInfo.FileName = gvdotLocation;
-        startInfo.WindowStyle = ProcessWindowStyle.Normal;
-        startInfo.Arguments = arguments;
+      ProcessStartInfo startInfo = new ProcessStartInfo();
+      startInfo.CreateNoWindow = false;
+      startInfo.UseShellExecute = false;
+      startInfo.FileName = gvdotLocation;
+      startInfo.WindowStyle = ProcessWindowStyle.Normal;
+      startInfo.Arguments = arguments;
 
-        // Start the process with the info we specified.
-        // Call WaitForExit and then the using statement will close.
-        int processTimeoutInMilliseconds = 5000;
-        using (Process exeProcess = Process.Start(startInfo))
+      // Start the process with the info we specified.
+      // Call WaitForExit and then the using statement will close.
+      int processTimeoutInMilliseconds = 5000;
+      using (Process exeProcess = Process.Start(startInfo))
+      {
+        exeProcess.WaitForExit(processTimeoutInMilliseconds);
+        if (!exeProcess.HasExited)
         {
-          exeProcess.WaitForExit(processTimeoutInMilliseconds);
-          if (!exeProcess.HasExited)
-          {
-            throw new ApplicationException(string.Format("Has not exited after timeout of {0} ms: [{1} {2}]", processTimeoutInMilliseconds, gvdotLocation, arguments));
-          }
-          if(exeProcess.ExitCode != 0)
-          {
-            throw new ApplicationException(string.Format("Non-zero exit code {0} from [{1} {2}]", exeProcess.ExitCode, gvdotLocation, arguments));
-          }
-        } // using: process
-      } // using: read file
+          throw new ApplicationException(string.Format("Has not exited after timeout of {0} ms: [{1} {2}]", processTimeoutInMilliseconds, gvdotLocation, arguments));
+        }
+        if(exeProcess.ExitCode != 0)
+        {
+          throw new ApplicationException(string.Format("Non-zero exit code {0} from [{1} {2}]", exeProcess.ExitCode, gvdotLocation, arguments));
+        }
+      } // using: process
     }
 
   }

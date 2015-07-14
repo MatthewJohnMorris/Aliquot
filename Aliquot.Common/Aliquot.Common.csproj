@@ -49,6 +49,7 @@
     <Compile Include="PrimesFromFile.cs" />
     <Compile Include="PrimesSieveErat.cs" />
     <Compile Include="PrimesTrialDivision.cs" />
+    <Compile Include="ProgressEventArgs.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities.cs" />
   </ItemGroup>

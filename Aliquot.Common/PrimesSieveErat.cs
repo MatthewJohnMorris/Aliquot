@@ -8,29 +8,38 @@ namespace Aliquot.Common
 {
   public class PrimesSieveErat : IPrimes
   {
-    int myMaxPrime;
-    List<int> myPrimes;
-    public PrimesSieveErat(int maxPrime)
+    private int myMaxPrime;
+    private IProgress<ProgressEventArgs> myProgressIndicator;
+    private List<int> myPrimes;
+    public PrimesSieveErat(int maxPrime, Progress<ProgressEventArgs> progressIndicator = null)
     {
       myMaxPrime = maxPrime;
+      myProgressIndicator = progressIndicator;
       myPrimes = GetAllPrimesLessThan(maxPrime);
     }
 
-    private static List<int> GetAllPrimesLessThan(int maxPrime)
+    private List<int> GetAllPrimesLessThan(int maxPrime)
     {
       var primes = new List<int>() { 2 };
       var maxSquareRoot = Math.Sqrt(maxPrime);
       var eliminated = new BitArray(maxPrime + 1);
+
+      ProgressEventArgs.RaiseEvent(myProgressIndicator, 0, "PrimesSieveErat sieving");
+
       int percent = 0;
-      Utilities.LogLine("PrimesSieveErat {0}", maxPrime);
+      BigInteger progressTotalEvery = 0;
       for (int i = 3; i <= maxPrime; i += 2)
       {
-        int newPercent = (int)(100.0 * i / maxPrime);
-        if(newPercent > percent)
+        if (i % 128 == 0)
         {
-          Utilities.LogLine("PrimesSieveErat {0}%", newPercent);
-          percent = newPercent;
+          int newPercent = (int)(i / (maxPrime / 100));
+          if (newPercent > percent)
+          {
+            ProgressEventArgs.RaiseEvent(myProgressIndicator, newPercent, string.Format("PrimesSieveErat sieving {0} from [2,{1}]", i, maxPrime));
+            percent = newPercent;
+          }
         }
+
         if (!eliminated[i])
         {
           primes.Add(i);
@@ -60,23 +69,22 @@ namespace Aliquot.Common
     }
     private void OutputToBinaryWriter(BinaryWriter writer)
     {
-      Utilities.Log("Writing To File [");
       int n = myPrimes.Count;
       writer.Write((Int32)n);
       int decile = 0;
       int i = 0;
-      foreach(int prime in myPrimes)
+      ProgressEventArgs.RaiseEvent(myProgressIndicator, 0, "Outputting primes to file");
+      foreach (int prime in myPrimes)
       {
         int newDecile = (int)(10.0 * i / n);
         if(newDecile != decile)
         {
-          Utilities.Log(".");
+          ProgressEventArgs.RaiseEvent(myProgressIndicator, newDecile * 10, "Outputting primes to file");
           decile = newDecile;
         }
         writer.Write((Int32)prime);
         i++;
       }
-      Utilities.LogLine("]");
     }
 
   }

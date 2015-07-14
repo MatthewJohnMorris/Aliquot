@@ -22,6 +22,7 @@ namespace ConsoleAliquot
       MakeAdb,
       MakePrimes,
       PrimesFile,
+      PrimesLimit,
       ShowAdb,
     }
 

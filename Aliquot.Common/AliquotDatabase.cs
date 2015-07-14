@@ -26,7 +26,10 @@ namespace Aliquot.Common
       CreationProperties = creationProperties;
     }
 
-    public static AliquotDatabase Create(IPrimes p, int dbLimit)
+    public static AliquotDatabase Create(
+      IPrimes p, 
+      int dbLimit,
+      Progress<ProgressEventArgs> progressIndicator = null)
     {
       var creationProperties = new Dictionary<string, string>();
       creationProperties["Create.ChainStartLimit"] = dbLimit.ToString();
@@ -61,7 +64,7 @@ namespace Aliquot.Common
           var diff = dtNow - dtStart;
           double s = diff.TotalSeconds;
           double expected = s * (dbLimit - i) / i;
-          Utilities.LogLine("ADB: {0}% i {1} Time Used (min) {2:N} Estimated time Left (min) {3:N}", newProgress, i, s/60.0, expected/60.0);
+          ProgressEventArgs.RaiseEvent(progressIndicator, newProgress, string.Format("ADB: i {0} Time Used (min) {1:N} Estimated time Left (min) {2:N}", i, s/60.0, expected/60.0));
           progress = newProgress;
         }
       }

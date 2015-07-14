@@ -32,11 +32,9 @@ namespace ConsoleAliquot
     {
       Trace.Listeners.Add(new ConsoleTraceListener());
 
-      Console.Out.WriteLine(Int32.MaxValue - 1);
-      return;
-
       CommandLineParser clp = new CommandLineParser(args);
       string primesFile = clp.OptionValue(OptionName.PrimesFile, "primes.bin");
+      string sPrimesLimit = clp.OptionValue(OptionName.PrimesLimit, "");
       string adbName = clp.OptionValue(OptionName.AdbFile, "aliquot.adb");
       string sDbLimit = clp.OptionValue(OptionName.AdbLimit, "100000");
 
@@ -46,7 +44,7 @@ namespace ConsoleAliquot
         {
           return;
         }
-        MakePrimesFile(primesFile);
+        MakePrimesFile(primesFile, sPrimesLimit);
       }
 
       if(clp.HasOption(OptionName.MakeAdb))
@@ -128,17 +126,27 @@ namespace ConsoleAliquot
 #endif
     }
 
-    private static void MakePrimesFile(string primesFile)
+    private static void MakePrimesFile(string primesFile, string sPrimesLimit = "")
     {
-      var pse = new PrimesSieveErat(Int32.MaxValue - 1);
+      int primesLimit = sPrimesLimit.Length == 0 ? (Int32.MaxValue - 1) : Int32.Parse(sPrimesLimit);
+      var pse = new PrimesSieveErat(primesLimit, CreateProgressReporter());
       pse.WriteToFile(primesFile);
+    }
+
+    private static Progress<Aliquot.Common.ProgressEventArgs> CreateProgressReporter()
+    {
+      return new Progress<Aliquot.Common.ProgressEventArgs>(ReportProgress);
+    }
+    private static void ReportProgress(Aliquot.Common.ProgressEventArgs args)
+    {
+      System.Console.Out.WriteLine(string.Format("{0}% complete: {1}", args.Percent, args.Message));
     }
 
     private static void MakeAdbFile(string primesFile, string adbName, string sDbLimit)
     {
       int dbLimit = int.Parse(sDbLimit);
-      var p = new PrimesFromFile(primesFile, PrimesFromFile.ShowLoadProgress.Yes);
-      var adb = AliquotDatabase.Create(p, dbLimit);
+      var p = new PrimesFromFile(primesFile, CreateProgressReporter());
+      var adb = AliquotDatabase.Create(p, dbLimit, CreateProgressReporter());
       adb.SaveAs(adbName);
     }
 
