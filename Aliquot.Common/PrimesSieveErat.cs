@@ -68,7 +68,7 @@ namespace Aliquot.Common
             {
               if (i % updateEvery == 0)
               {
-                int percent = i / (NumPrimes/100);
+                int percent = (NumPrimes < 100) ? i * 100 / NumPrimes : i / (NumPrimes/100);
                 ProgressEventArgs.RaiseEvent(ProgressIndicator, percent, string.Format("PrimesSieveErat writing primes"));
               }
               int prime = reader.ReadInt32();
