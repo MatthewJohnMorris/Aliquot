@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Management;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,6 +16,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Aliquot.Common;
+using ProgressEventArgs = Aliquot.Common.ProgressEventArgs;
 
 namespace WpfAliquot
 {
@@ -218,7 +219,7 @@ namespace WpfAliquot
           this.textPrimesFile.Text,
           this.textPrimesLimit.Text,
           w.CreateProgressReporter());
-        w.Launch(a.Run, "Make Primes");
+        w.LaunchModal(a.Run, "Make Primes");
       }
       else if (sender == this.buttonReadAliquotDB)
       {
@@ -245,7 +246,7 @@ namespace WpfAliquot
           this.textAdbLimit.Text,
           this.textAdbFile.Text,
           w.CreateProgressReporter());
-        w.Launch(a.Run, "Make Aliquot DB");
+        w.LaunchModal(a.Run, "Make Aliquot DB");
       }
       else if (sender == this.buttonFindGvDotExe)
       {
@@ -269,7 +270,7 @@ namespace WpfAliquot
           db.WriteTree(treeRoot, treeLimit, writer);
         }
         GraphViz.RunDotExe(gvOut, "svg");
-        MessageBox.Show("File written to " + gvOut + ".svg", "Aliquot Tree Creation", MessageBoxButton.OK, MessageBoxImage.Information);
+        MessageBox.Show("File written to " + System.IO.Path.GetFullPath(gvOut + ".svg"), "Aliquot Tree Creation", MessageBoxButton.OK, MessageBoxImage.Information);
       }
       else if (sender == this.buttonExportAdb)
       {
@@ -288,10 +289,15 @@ namespace WpfAliquot
           db.ExportTable(writer, exportLimit, exportFormat);
         }
         MessageBox.Show(
-          string.Format("File up to {0} written to {1}", sExportLimit, exportFile),
+          string.Format("File up to {0} written to {1}", sExportLimit, System.IO.Path.GetFullPath(exportFile)),
           "Aliquot DB Table Export", 
           MessageBoxButton.OK, 
           MessageBoxImage.Information);
+      }
+      else if (sender == this.buttonOpenExplorer)
+      {
+        string directory = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+        System.Diagnostics.Process.Start(directory);
       }
       UpdateAccordingToGeneratedFiles();
       return;
@@ -310,6 +316,50 @@ namespace WpfAliquot
     private void textAdbFile_TextChanged(object sender, TextChangedEventArgs e)
     {
       UpdateAccordingToGeneratedFiles();
+    }
+
+    private void MenuItem_Click(object sender, RoutedEventArgs e)
+    {
+      string s = ((MenuItem)sender).Header.ToString();
+      if(0 == string.Compare(s, "Processor...", StringComparison.OrdinalIgnoreCase))
+      {
+        MenuCommand_Processor();
+      }
+    }
+
+    private void MenuCommand_Processor()
+    {
+      var sb = new StringBuilder();
+      double dMaxClockSpeedGHz = 0.0;
+      using (ManagementObjectSearcher win32Proc = new ManagementObjectSearcher("select * from Win32_Processor"))
+      {
+        foreach (ManagementObject obj in win32Proc.Get())
+        {
+          double dClockSpeedMHz = Convert.ToDouble(obj["CurrentClockSpeed"]);
+          double dClockSpeedGHz = dClockSpeedMHz / 1000.0;
+          dMaxClockSpeedGHz = Math.Max(dMaxClockSpeedGHz, dClockSpeedGHz);
+          string procName = obj["Name"].ToString();
+          string manufacturer = obj["Manufacturer"].ToString();
+          string version = obj["Version"].ToString();
+          sb.AppendLine(string.Format("* Processor: {0:N3}GHz [{1} {2} {3}]", dClockSpeedGHz, manufacturer, procName, version));
+        }
+      }
+      if (dMaxClockSpeedGHz == 0.0)
+      {
+        sb.AppendLine("Sorry: couldn't get any processor speed information!");
+      }
+      else
+      {
+        double speedRatio = dMaxClockSpeedGHz / 3.166; // actual speed on this machine!
+        sb.AppendLine(string.Format("Processor Max Speed: {0:N3}", dMaxClockSpeedGHz));
+        sb.AppendLine(string.Format("Processor Speed Ratio: {0:N3}", speedRatio));
+      }
+      MessageBox.Show(
+        sb.ToString(),
+        "Processor Information",
+        MessageBoxButton.OK, 
+        MessageBoxImage.Information);
+      
     }
 
   }
