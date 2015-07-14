@@ -20,11 +20,27 @@ namespace Aliquot.Common
     /// </summary>
     public const string FileNameGvDotLocation = "aliquot.gvdotlocation";
 
+    public delegate int GetUserInput_Int32(List<string> choices);
+
+    public static int GetUserInput_Int32_Console(List<string> choices)
+    {
+      Console.Out.WriteLine("Choices are as followes:");
+      int n = choices.Count;
+      for (int i = 0; i < n; ++i)
+      {
+        Console.Out.WriteLine("[{0}] {1}", i, choices[i]);
+      }
+      Console.Out.WriteLine("Please type the number you want to use, and hit RETURN");
+      var input = Console.ReadLine();
+      int nInput = Convert.ToInt32(input);
+      return nInput;
+    }
+
     /// <summary>
     /// Interactive function to list all instances of dot.exe off ProgramFilesX86 and to let the 
     /// user select one to use for graphing.
     /// </summary>
-    public static void FindDotExe()
+    public static void FindDotExe(GetUserInput_Int32 userInput)
     {
       var pathProgramFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
       string fileToFind = "dot.exe";
@@ -34,22 +50,14 @@ namespace Aliquot.Common
       {
         throw new ApplicationException(string.Format("Could not find [{0}] in [{1}]", fileToFind, pathProgramFilesX86));
       }
-      Console.Out.WriteLine("Here are all the instances of [{0}] in [{1}]", fileToFind, pathProgramFilesX86);
-      int n = files.Count;
-      for (int i = 0; i < n; ++i)
-      {
-        Console.Out.WriteLine("[{0}] {1}", i, files[i]);
-      }
-      Console.Out.WriteLine("Please type the number of the {0} you want to use, and hit RETURN", fileToFind);
-      var input = Console.ReadLine();
-      int nInput = Convert.ToInt32(input);
+      int nInput = userInput(files);
       if(nInput < 0)
       {
-        throw new ApplicationException(string.Format("Input ({0}) is less than minimum allowed (0)", input));
+        throw new ApplicationException(string.Format("Input ({0}) is less than minimum allowed (0)", nInput));
       }
-      if (nInput >= n)
+      if (nInput >= files.Count)
       {
-        throw new ApplicationException(string.Format("Input ({0}) is greater than maximum allowed ({1})", input, n-1));
+        throw new ApplicationException(string.Format("Input ({0}) is greater than maximum allowed ({1})", nInput, files.Count - 1));
       }
       using(var w = new StreamWriter(GraphViz.FileNameGvDotLocation))
       {
@@ -85,7 +93,7 @@ namespace Aliquot.Common
       string arguments = "-T" + gvFileType + " " + gvOut + ".gv -o " + gvOut + "." + gvFileType;
 
       ProcessStartInfo startInfo = new ProcessStartInfo();
-      startInfo.CreateNoWindow = false;
+      startInfo.CreateNoWindow = true;
       startInfo.UseShellExecute = false;
       startInfo.FileName = gvdotLocation;
       startInfo.WindowStyle = ProcessWindowStyle.Normal;

@@ -9,7 +9,7 @@ namespace Aliquot.Common.Test
     [TestMethod]
     public void FactorPerfect()
     {
-      IPrimes p = new PrimesSieveErat(10000);
+      IPrimes p = PrimesFromFileUnitTest.AssembleFromFile(10000);
 
       var pf6 = new PrimeFactorisation(p, 6);
       Assert.AreEqual(6, pf6.SumAllProperDivisors());
@@ -33,7 +33,7 @@ namespace Aliquot.Common.Test
     [TestMethod]
     public void TestFirst70()
     {
-      IPrimes p = new PrimesSieveErat(10000);
+      IPrimes p = PrimesFromFileUnitTest.AssembleFromFile(10000);
 
       TestSigma(p, 1, 1);
       TestSigma(p, 2, 3);

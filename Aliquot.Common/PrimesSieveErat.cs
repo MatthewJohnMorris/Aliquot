@@ -2,89 +2,158 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Numerics;
 
 namespace Aliquot.Common
 {
-  public class PrimesSieveErat : IPrimes
+  public class PrimesGeneratorSieveErat
   {
-    private int myMaxPrime;
-    private IProgress<ProgressEventArgs> myProgressIndicator;
-    private List<int> myPrimes;
-    public PrimesSieveErat(int maxPrime, Progress<ProgressEventArgs> progressIndicator = null)
+    public static void Generate(
+      string path,
+      int maxPrime,
+      Progress<ProgressEventArgs> progressIndicator = null)
     {
-      myMaxPrime = maxPrime;
-      myProgressIndicator = progressIndicator;
-      myPrimes = GetAllPrimesLessThan(maxPrime);
+      string tempPath = System.IO.Path.GetTempFileName();
+      try
+      {
+        GenerateUsingTempFile(path, maxPrime, progressIndicator, tempPath);
+      }
+      finally
+      {
+        try
+        {
+          File.Delete(tempPath);
+        }
+        catch(Exception) {}
+      }
     }
 
-    private List<int> GetAllPrimesLessThan(int maxPrime)
+    private static void GenerateUsingTempFile(
+      string path,
+      int maxPrime,
+      Progress<ProgressEventArgs> progressIndicator,
+      string tempPath)
     {
-      var primes = new List<int>() { 2 };
-      var maxSquareRoot = Math.Sqrt(maxPrime);
-      var eliminated = new BitArray(maxPrime + 1);
+      // First pass just writes primes out, need then to re-read and re-save!
+      int numPrimes = WriteUncompressedTempFile(tempPath, maxPrime, progressIndicator);
 
-      ProgressEventArgs.RaiseEvent(myProgressIndicator, 0, "PrimesSieveErat sieving");
-
-      int percent = 0;
-      BigInteger progressTotalEvery = 0;
-      for (int i = 3; i <= maxPrime; i += 2)
+      // Re-read and write to compressed file
+      int n100 = numPrimes / 100;
+      if (n100 == 0) { n100 = 1; }
+      using (var fsOut = File.Create(path))
       {
-        if (i % 128 == 0)
+        using (var compressedStream = new GZipStream(fsOut, CompressionMode.Compress))
         {
-          int newPercent = (int)(i / (maxPrime / 100));
-          if (newPercent > percent)
+          using (var writer = new BinaryWriter(compressedStream))
           {
-            ProgressEventArgs.RaiseEvent(myProgressIndicator, newPercent, string.Format("PrimesSieveErat sieving {0} from [2,{1}]", i, maxPrime));
-            percent = newPercent;
-          }
-        }
-
-        if (!eliminated[i])
-        {
-          primes.Add(i);
-          if (i < maxSquareRoot)
-          {
-            for (int j = i * i; j <= maxPrime && j > 0; j += 2 * i)
+            writer.Write((Int32)numPrimes);
+            using (var fsIn = File.Open(tempPath, FileMode.Open, FileAccess.Read))
             {
-              eliminated[j] = true;
+              using (var reader = new BinaryReader(fsIn))
+              {
+                for (int i = 0; i < numPrimes; ++i)
+                {
+                  if(i % n100 == 0)
+                  {
+                    int percent = i / n100;
+                    ProgressEventArgs.RaiseEvent(progressIndicator, percent, string.Format("PrimesSieveErat writing primes"));
+                  }
+                  int prime = reader.ReadInt32();
+                  writer.Write((Int32)prime);
+                }
+              }
             }
           }
         }
       }
-      return primes;
+
     }
 
-    public BigInteger this[int index]
+    private static int WriteUncompressedTempFile(
+      string tempPath,
+      int maxPrime,
+      Progress<ProgressEventArgs> progressIndicator)
     {
-      get
+      var p = new PrimesGeneratorSieveErat(maxPrime, progressIndicator);
+      using (var fileStream = System.IO.File.Open(tempPath, FileMode.Open))
       {
-        return myPrimes[index];
-      }
-    }
-
-    public void WriteToFile(string path)
-    {
-      Utilities.WriteCompressedFile(path, this.OutputToBinaryWriter);
-    }
-    private void OutputToBinaryWriter(BinaryWriter writer)
-    {
-      int n = myPrimes.Count;
-      writer.Write((Int32)n);
-      int decile = 0;
-      int i = 0;
-      ProgressEventArgs.RaiseEvent(myProgressIndicator, 0, "Outputting primes to file");
-      foreach (int prime in myPrimes)
-      {
-        int newDecile = (int)(10.0 * i / n);
-        if(newDecile != decile)
+        using (var writer = new BinaryWriter(fileStream))
         {
-          ProgressEventArgs.RaiseEvent(myProgressIndicator, newDecile * 10, "Outputting primes to file");
-          decile = newDecile;
+          return p.OutputToBinaryWriter(writer);
         }
-        writer.Write((Int32)prime);
-        i++;
       }
+    }
+
+    private int myMaxPrime;
+    private IProgress<ProgressEventArgs> myProgressIndicator;
+
+    private PrimesGeneratorSieveErat(
+      int maxPrime,
+      Progress<ProgressEventArgs> progressIndicator = null)
+    {
+      myMaxPrime = maxPrime;
+      myProgressIndicator = progressIndicator;
+    }
+
+    private int OutputToBinaryWriter(BinaryWriter writer)
+    {
+      // First prime (2)
+      writer.Write((Int32)2);
+      int numPrimes = 1;
+
+      var maxSquareRoot = Math.Sqrt(myMaxPrime);
+      var eliminated = new BitArray(myMaxPrime + 1);
+
+      ProgressEventArgs.RaiseEvent(myProgressIndicator, 0, "PrimesSieveErat sizing");
+
+      double sizeSum = 0.0;
+      {
+        int nextReport = 4;
+        for (int i = 3; i <= myMaxPrime; i += 2)
+        {
+          if (i > nextReport && nextReport > 0)
+          {
+            sizeSum += Math.Log10((double)(myMaxPrime / nextReport));
+            nextReport += i;
+          }
+        }
+      }
+
+      ProgressEventArgs.RaiseEvent(myProgressIndicator, 0, "PrimesSieveErat sieving");
+
+      double progressSum = 0.0;
+      {
+        int nextReport = 4;
+        BigInteger progressTotalEvery = 0;
+        for (int i = 3; i <= myMaxPrime; i += 2)
+        {
+          if (i > nextReport && nextReport > 0)
+          {
+            progressSum += Math.Log10((double)(myMaxPrime / nextReport));
+            nextReport += i;
+            int percent = (int)(progressSum * 100.0 / sizeSum);
+            ProgressEventArgs.RaiseEvent(myProgressIndicator, percent, string.Format("PrimesSieveErat sieving {0} from [2,{1}]", i, myMaxPrime));
+          }
+
+          if (!eliminated[i])
+          {
+            // We've found a prime - write it out
+            writer.Write((Int32)i);
+            numPrimes++;
+
+            if (i < maxSquareRoot)
+            {
+              for (int j = i * i; j <= myMaxPrime && j > 0; j += 2 * i)
+              {
+                eliminated[j] = true;
+              }
+            }
+          }
+        }
+      }
+
+      return numPrimes;
     }
 
   }

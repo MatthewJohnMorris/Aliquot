@@ -259,10 +259,18 @@ namespace Aliquot.Common
       }
     }
 
+    public enum ExportFormat
+    {
+      Tsv,
+      Csv
+    }
+
     // n, Prime Factors, Aliquot Root, Aliquot Sum
     public void ExportTable(
       TextWriter writer,      
-      BigInteger limit)
+      BigInteger limit,
+      ExportFormat exportFormat
+      )
     {
       // Get Aliquot Root Sets by iterating over successors. Note that we may not have
       // all elements for a given root in our collection if the chain has gone above
@@ -316,10 +324,21 @@ namespace Aliquot.Common
         }
       }
 
+      string delimiter = "|";
+      if(exportFormat == ExportFormat.Csv)
+      {
+        delimiter = ",";
+      }
+      else if(exportFormat == ExportFormat.Tsv)
+      {
+        delimiter = "\t";
+      }
+
       // Output table
+      writer.WriteLine("n{0}f{0}r{0}s", delimiter);
       for(BigInteger n = 2; n <= limit; ++n)
       {
-        writer.WriteLine("{0}\t{1}\t{2}\t{3}", n, Links[n].Factorisation, aliquotRoots[n], Links[n].Successor);
+        writer.WriteLine("{0}{1}{2}{1}{3}{1}{4}", n, delimiter, Links[n].Factorisation, aliquotRoots[n], Links[n].Successor);
       }
 
     }

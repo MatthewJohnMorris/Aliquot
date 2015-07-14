@@ -19,11 +19,13 @@ namespace WpfAliquot
   /// </summary>
   public partial class ProgressWindow : Window
   {
+    public bool IsLaunchedAsDialog { get; private set; }
     private Task myTask = null;
     private string myDescripton = null;
 
     public ProgressWindow()
     {
+      IsLaunchedAsDialog = false;
       InitializeComponent();
     }
 
@@ -41,7 +43,10 @@ namespace WpfAliquot
       }
       else
       {
-        MessageBox.Show("Task Completed Successfully", "Task '" + myDescripton + "'", MessageBoxButton.OK, MessageBoxImage.Information);
+        if (!IsLaunchedAsDialog)
+        {
+          MessageBox.Show("Task Completed Successfully", "Task '" + myDescripton + "'", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
       }
       this.Dispatcher.Invoke(this.Close);
     }
@@ -57,6 +62,7 @@ namespace WpfAliquot
 
     public void LaunchModal(Action action, string description)
     {
+      IsLaunchedAsDialog = true;
       this.myTask = Task.Run(action);
       this.myDescripton = description ?? "(null description passed)";
       myTask.ContinueWith(this.UponTaskCompletion);

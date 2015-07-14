@@ -92,7 +92,7 @@ namespace ConsoleAliquot
 
       if(clp.HasOption(OptionName.GvFindDot))
       {
-        GraphViz.FindDotExe();
+        GraphViz.FindDotExe(GraphViz.GetUserInput_Int32_Console);
       }
 
       if(clp.OptionValues.Count == 0)
@@ -129,8 +129,7 @@ namespace ConsoleAliquot
     private static void MakePrimesFile(string primesFile, string sPrimesLimit = "")
     {
       int primesLimit = sPrimesLimit.Length == 0 ? (Int32.MaxValue - 1) : Int32.Parse(sPrimesLimit);
-      var pse = new PrimesSieveErat(primesLimit, CreateProgressReporter());
-      pse.WriteToFile(primesFile);
+      PrimesGeneratorSieveErat.Generate(primesFile, primesLimit, CreateProgressReporter());
     }
 
     private static Progress<Aliquot.Common.ProgressEventArgs> CreateProgressReporter()
@@ -191,7 +190,7 @@ namespace ConsoleAliquot
       var db = AliquotDatabase.Open(adbName);
       Console.Out.WriteLine("*/");
       BigInteger dbLimit = BigInteger.Parse(sDbLimit);
-      db.ExportTable(Console.Out, dbLimit);
+      db.ExportTable(Console.Out, dbLimit, AliquotDatabase.ExportFormat.Tsv);
     }
 
     private static bool WarnOfLongOperationAndCheckIfUserWantsToContinue(string description, double time)

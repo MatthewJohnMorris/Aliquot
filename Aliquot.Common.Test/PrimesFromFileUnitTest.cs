@@ -6,14 +6,13 @@ namespace Aliquot.Common.Test
   [TestClass]
   public class PrimesFromFileUnitTest
   {
-    private IPrimes AssembleFromFile(int maxPrime)
+    public static IPrimes AssembleFromFile(int maxPrime)
     {
       string tempFileName = System.IO.Path.GetTempFileName();
       IPrimes ret = null;
       try
       {
-        var p = new PrimesSieveErat(maxPrime);
-        p.WriteToFile(tempFileName);
+        PrimesGeneratorSieveErat.Generate(tempFileName, maxPrime);
         ret = new PrimesFromFile(tempFileName);
       }
       finally
