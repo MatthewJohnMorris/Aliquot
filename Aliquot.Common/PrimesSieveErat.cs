@@ -17,10 +17,16 @@ namespace Aliquot.Common
       string tempPath = System.IO.Path.GetTempFileName();
       try
       {
-        GenerateUsingTempFile(path, maxPrime, progressIndicator, tempPath);
+        // First pass just writes primes out to uncompressed temp file
+        int numPrimes = WriteUncompressedTempFile(tempPath, maxPrime, progressIndicator);
+
+        // Second pass re-writes, with #primes header, to compressed file
+        var tempDetails = new TempDetails(tempPath, numPrimes, progressIndicator);
+        Utilities.WriteCompressedFile(path, tempDetails.Writer);
       }
       finally
       {
+        // Make sure the temp file is deleted, it's about half a Gig!
         try
         {
           File.Delete(tempPath);
@@ -29,46 +35,51 @@ namespace Aliquot.Common
       }
     }
 
-    private static void GenerateUsingTempFile(
-      string path,
-      int maxPrime,
-      Progress<ProgressEventArgs> progressIndicator,
-      string tempPath)
+    class TempDetails
     {
-      // First pass just writes primes out, need then to re-read and re-save!
-      int numPrimes = WriteUncompressedTempFile(tempPath, maxPrime, progressIndicator);
+      public string TempPath;
+      public int NumPrimes;
+      public Progress<ProgressEventArgs> ProgressIndicator;
 
-      // Re-read and write to compressed file
-      int n100 = numPrimes / 100;
-      if (n100 == 0) { n100 = 1; }
-      using (var fsOut = File.Create(path))
+      public TempDetails(
+        string tempPath,
+        int numPrimes,
+        Progress<ProgressEventArgs> progressIndicator)
       {
-        using (var compressedStream = new GZipStream(fsOut, CompressionMode.Compress))
+        TempPath = tempPath;
+        NumPrimes = numPrimes;
+        ProgressIndicator = progressIndicator;
+      }
+      public void Writer(
+        BinaryWriter writer)
+      {
+        int updateEvery = NumPrimes / 1000;
+        if (updateEvery == 0) { updateEvery = 1; }
+
+        // First, write the count of primes
+        writer.Write((Int32)NumPrimes);
+
+        // Now copy from the temp path into our target stream
+        using (var fsIn = File.Open(TempPath, FileMode.Open, FileAccess.Read))
         {
-          using (var writer = new BinaryWriter(compressedStream))
+          using (var reader = new BinaryReader(fsIn))
           {
-            writer.Write((Int32)numPrimes);
-            using (var fsIn = File.Open(tempPath, FileMode.Open, FileAccess.Read))
+            for (int i = 0; i < NumPrimes; ++i)
             {
-              using (var reader = new BinaryReader(fsIn))
+              if (i % updateEvery == 0)
               {
-                for (int i = 0; i < numPrimes; ++i)
-                {
-                  if(i % n100 == 0)
-                  {
-                    int percent = i / n100;
-                    ProgressEventArgs.RaiseEvent(progressIndicator, percent, string.Format("PrimesSieveErat writing primes"));
-                  }
-                  int prime = reader.ReadInt32();
-                  writer.Write((Int32)prime);
-                }
+                int percent = i / (NumPrimes/100);
+                ProgressEventArgs.RaiseEvent(ProgressIndicator, percent, string.Format("PrimesSieveErat writing primes"));
               }
+              int prime = reader.ReadInt32();
+              writer.Write((Int32)prime);
             }
           }
         }
-      }
 
+      }
     }
+
 
     private static int WriteUncompressedTempFile(
       string tempPath,
@@ -107,6 +118,7 @@ namespace Aliquot.Common
 
       ProgressEventArgs.RaiseEvent(myProgressIndicator, 0, "PrimesSieveErat sizing");
 
+      // Initialisation for Progress Reporting
       double sizeSum = 0.0;
       {
         int nextReport = 4;
@@ -128,6 +140,7 @@ namespace Aliquot.Common
         BigInteger progressTotalEvery = 0;
         for (int i = 3; i <= myMaxPrime; i += 2)
         {
+          // Progress Reporting
           if (i > nextReport && nextReport > 0)
           {
             progressSum += Math.Log10((double)(myMaxPrime / nextReport));
@@ -142,6 +155,7 @@ namespace Aliquot.Common
             writer.Write((Int32)i);
             numPrimes++;
 
+            // Eliminate multiples
             if (i < maxSquareRoot)
             {
               for (int j = i * i; j <= myMaxPrime && j > 0; j += 2 * i)

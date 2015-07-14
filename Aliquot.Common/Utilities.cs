@@ -21,6 +21,16 @@ namespace Aliquot.Common
 
     public delegate void OutputToBinaryWriter(BinaryWriter writer);
 
+    public static void WriteFile(string path, OutputToBinaryWriter func)
+    {
+      using (var fileStream = File.Create(path))
+      {
+        using (var writer = new BinaryWriter(fileStream))
+        {
+          func(writer);
+        }
+      }
+    }
     public static void WriteCompressedFile(string path, OutputToBinaryWriter func)
     {
       using(var fileStream = File.Create(path))
