@@ -115,68 +115,50 @@ namespace WpfAliquot
       }
     }
 
-    private class ActionMakePrimes
+    static Action CreateActionMakePrimes(
+      string primesFile,
+      string primesLimit,
+      Progress<ProgressEventArgs> handler)
     {
-      private string myPrimesFile;
-      private string myPrimesLimit;
-      private Progress<ProgressEventArgs> myHandler;
-      public ActionMakePrimes(
-        string primesFile,
-        string primesLimit,
-        Progress<ProgressEventArgs> handler)
+      Action ret = delegate
       {
-        myPrimesFile = primesFile;
-        myPrimesLimit = primesLimit;
-        myHandler = handler;
-      }
-      public void Run()
-      {
-        int sieveLimit = Convert.ToInt32(myPrimesLimit);
-        PrimesGeneratorSieveErat.Generate(myPrimesFile, sieveLimit, myHandler);
-      }
+        int sieveLimit = Convert.ToInt32(primesLimit);
+        PrimesGeneratorSieveErat.Generate(primesFile, sieveLimit, handler);
+      };
+      return ret;
     }
 
-    private class ActionMakeAliquotDb
+    static Action CreateActionMakeAliquotDb(
+      string primesFile,
+      string adbLimit,
+      string adbFile,
+      Progress<ProgressEventArgs> handler)
     {
-      private string myPrimesFile;
-      private string myAdbLimit;
-      private string myAdbFile;
-      private Progress<ProgressEventArgs> myHandler;
-      public ActionMakeAliquotDb(
-        string primesFile,
-        string adbLimit,
-        string adbFile,
-        Progress<ProgressEventArgs> handler)
+      Action ret = delegate
       {
-        myPrimesFile = primesFile;
-        myAdbLimit = adbLimit;
-        myAdbFile = adbFile;
-        myHandler = handler;
-      }
-      public void Run()
-      {
-        IPrimes p = new PrimesFromFile(myPrimesFile, myHandler);
-        int dbLimit = int.Parse(myAdbLimit);
-        var adb = AliquotDatabase.Create(p, dbLimit, myHandler);
-        adb.SaveAs(myAdbFile);
-      }
+        IPrimes p = new PrimesFromFile(primesFile, handler);
+        int dbLimit = int.Parse(adbLimit);
+        var adb = AliquotDatabase.Create(p, dbLimit, handler);
+        adb.SaveAs(adbFile);
+      };
+      return ret;
     }
 
     private class ActionReadPrimesFromFile
     {
-      public IPrimes PrimesFromFile { get; private set; }
-      private string myPrimesFile;
-      private Progress<ProgressEventArgs> myHandler;
+      public string PrimesFile { get; private set; }
+      public Progress<ProgressEventArgs> Handler { get; private set; }
+      public PrimesFromFile Result { get; private set; }
       public ActionReadPrimesFromFile(
         string primesFile,
         Progress<ProgressEventArgs> handler)
       {
-        myPrimesFile = primesFile;
-        myHandler = handler;
+        PrimesFile = primesFile;
+        Handler = handler;
       }
       public void Run()
       {
-        PrimesFromFile = new PrimesFromFile(myPrimesFile, myHandler);
+        Result = new PrimesFromFile(PrimesFile, Handler);
       }
     }
 
@@ -194,15 +176,17 @@ namespace WpfAliquot
       if(sender == this.buttonReadPrimes)
       {
         ProgressWindow w = new ProgressWindow();
-        var a = new ActionReadPrimesFromFile(this.textPrimesFile.Text, w.CreateProgressReporter());
+        var a = new ActionReadPrimesFromFile(
+          this.textPrimesFile.Text, 
+          w.CreateProgressReporter());
         w.LaunchModal(a.Run, "Read Primes");
-        if(a.PrimesFromFile == null)
+        if(a.Result == null)
         {
           throw new ApplicationException("No Primes File was opened for " + this.textPrimesFile.Text);
         }
         else
         {
-          MessageBox.Show(a.PrimesFromFile.ToString());
+          MessageBox.Show(a.Result.ToString());
         }
       }
       else if (sender == this.buttonMakePrimes)
@@ -215,11 +199,11 @@ namespace WpfAliquot
           return;
         }
         ProgressWindow w = new ProgressWindow();
-        var a = new ActionMakePrimes(
+        var a = CreateActionMakePrimes(
           this.textPrimesFile.Text,
           this.textPrimesLimit.Text,
           w.CreateProgressReporter());
-        w.LaunchModal(a.Run, "Make Primes");
+        w.LaunchModal(a, "Make Primes");
       }
       else if (sender == this.buttonReadAliquotDB)
       {
@@ -241,12 +225,12 @@ namespace WpfAliquot
           return;
         }
         ProgressWindow w = new ProgressWindow();
-        var a = new ActionMakeAliquotDb(
+        var a = CreateActionMakeAliquotDb(
           this.textPrimesFile.Text,
           this.textAdbLimit.Text,
           this.textAdbFile.Text,
           w.CreateProgressReporter());
-        w.LaunchModal(a.Run, "Make Aliquot DB");
+        w.LaunchModal(a, "Make Aliquot DB");
       }
       else if (sender == this.buttonFindGvDotExe)
       {
