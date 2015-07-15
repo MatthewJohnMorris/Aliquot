@@ -181,10 +181,11 @@ namespace Aliquot.Common
       // Build reverse links
       var reverseLinks = new Dictionary<BigInteger, List<BigInteger>>();
 
-      foreach(var link in Links.Values
-        .Where((x) => x.Current <= limit)
-        .Where((x) => x.Successor <= limit)
-        )
+      var query = from link in Links.Values
+        where link.Current <= limit
+        where link.Successor <= limit
+        select link;
+      foreach (var link in query)
       {
         BigInteger to = link.Successor;
         if (!reverseLinks.ContainsKey(to))
