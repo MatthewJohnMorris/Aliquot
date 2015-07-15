@@ -208,7 +208,8 @@ namespace Aliquot.Common
         string color = CalcColor(Links[node]);
         writer.WriteLine("{0} [shape=record,label=\"<f0>{0}|<f1>{1}\",color={2}];", node, factors, color);
       }
-      OutputLinks(reverseLinks, treeBase, writer);
+      var nodesWritten = new HashSet<BigInteger>();
+      OutputLinks(reverseLinks, treeBase, writer, nodesWritten);
       writer.WriteLine("}");
 
     }
@@ -238,24 +239,32 @@ namespace Aliquot.Common
       if(! links.ContainsKey(current)) { return; }
       foreach(BigInteger predecessor in links[current])
       {
-        GatherNodes(links, predecessor, nodes);
+        if (!nodes.Contains(predecessor))
+        {
+          GatherNodes(links, predecessor, nodes);
+        }
       }
     }
     private void OutputLinks(
       Dictionary<BigInteger, List<BigInteger>> links, 
       BigInteger current,
-      TextWriter writer)
+      TextWriter writer,
+      HashSet<BigInteger> nodesWritten)
     {
       if (!links.ContainsKey(current)) { return; }
       foreach(BigInteger predecessor in links[current])
       {
-        string attributes = "";
-        if(current > predecessor)
+        if(! nodesWritten.Contains(predecessor))
         {
-          attributes = " [arrowhead=empty]";
+          string attributes = "";
+          if (current > predecessor)
+          {
+            attributes = " [arrowhead=empty]";
+          }
+          writer.WriteLine("{0}->{1}" + attributes, predecessor, current);
+          nodesWritten.Add(predecessor);
+          OutputLinks(links, predecessor, writer, nodesWritten);
         }
-        writer.WriteLine("{0}->{1}" + attributes, predecessor, current);
-        OutputLinks(links, predecessor, writer);
       }
     }
 
