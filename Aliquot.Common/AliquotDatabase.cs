@@ -44,19 +44,25 @@ namespace Aliquot.Common
       int progress = 0;
       for (int i = 1; i <= dbLimit; ++i)
       {
+        // Build the chain onwards from this number
         BigInteger n = i;
-        var seq = new HashSet<BigInteger>();
-        seq.Add(n);
-        while(n > 1 && n < upperLimit && seq.Count < 200)
+        int chainLength = 0;
+        while (n > 1 && n < upperLimit && chainLength < 200)
         {
+          // Get the new link
           var s = new AliquotChainLink(p, n);
+          // Add to set of links unless it takes us above the limit
           if (s.Successor > upperLimit) { break; }
+          // We exit if we are joining an existing chain
+          if (links.ContainsKey(n)) { break; }
+          // It's a new link - add it to the database
           links[n] = s;
-          if (seq.Contains(s.Successor)) { break; }
-          seq.Add(s.Successor);
+          chainLength++;
+          // Go to next element in chain
           n = s.Successor;
         }
 
+        // Indicate progress
         int newProgress = (int)(100.0 * i / dbLimit);
         if (newProgress > progress)
         {
@@ -89,25 +95,7 @@ namespace Aliquot.Common
       properties["Count"] = Links.Count.ToString();
       properties["WriteTimeUtc"] = DateTime.UtcNow.ToString();
       properties["WriteUser"] = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
-      string fileName = "(nofile)";
-      FileStream fs = writer.BaseStream as FileStream;
-      if(fs != null)
-      {
-        fileName = fs.Name;
-      }
-      else
-      {
-        GZipStream gfs = writer.BaseStream as GZipStream;
-        if(gfs != null)
-        {
-          FileStream fs2 = gfs.BaseStream as FileStream;
-          if(fs2 != null)
-          {
-            fileName = fs2.Name + " (gzipped)";
-          }
-        }
-      }
-      properties["WriteFile"] = fileName;
+      properties["WriteFile"] = Utilities.GetUnderlyingFileName(writer);
       WriteProperties(writer, properties);
 
       // data

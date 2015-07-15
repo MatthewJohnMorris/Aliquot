@@ -125,6 +125,25 @@ namespace WpfAliquot
       int sieveLimit = Convert.ToInt32(primesLimit);
       PrimesGeneratorSieveErat.Generate(primesFile, sieveLimit, handler);
     }
+    public class ActionMakePrimesFile
+    {
+      public string PrimesFile { get; private set; }
+      public string PrimesLimit { get; private set; }
+      public Progress<ProgressEventArgs> Handler { get; private set; }
+      public ActionMakePrimesFile(
+        string primesFile, string primesLimit, Progress<ProgressEventArgs> handler)
+      {
+        PrimesFile = primesFile;
+        PrimesLimit = primesLimit;
+        Handler = handler;
+      }
+      public void Run()
+      {
+        int sieveLimit = Convert.ToInt32(PrimesLimit);
+        PrimesGeneratorSieveErat.Generate(PrimesFile, sieveLimit, Handler);
+      }
+    }
+
     static void MakeAliquotDb(
       string primesFile,
       string adbLimit,
@@ -136,6 +155,7 @@ namespace WpfAliquot
       var adb = AliquotDatabase.Create(p, dbLimit, handler);
       adb.SaveAs(adbFile);
     }
+
     static void MakeTreeGraph(
       string sTreeRoot,
       string sTreeLimit,
@@ -170,7 +190,7 @@ namespace WpfAliquot
       if(sender == this.buttonReadPrimes)
       {
         ProgressWindow w = new ProgressWindow();
-        var primesFile = this.textPrimesFile.Text;
+        string primesFile = this.textPrimesFile.Text;
         var handler = w.CreateProgressReporter();
         Func<PrimesFromFile> f = () => new PrimesFromFile(primesFile, handler);
         var result = w.LaunchModal(f, "Read Primes");
@@ -193,10 +213,10 @@ namespace WpfAliquot
           return;
         }
         ProgressWindow w = new ProgressWindow();
-        Action a = () => MakePrimesFile(
-          this.textPrimesFile.Text,
-          this.textPrimesLimit.Text,
-          w.CreateProgressReporter());
+        var r = w.CreateProgressReporter();
+        string primesFile = this.textPrimesFile.Text;
+        string primesLimit = this.textPrimesLimit.Text;
+        Action a = () => MakePrimesFile(primesFile, primesLimit, r);
         w.Launch(a, "Make Primes");
       }
       else if (sender == this.buttonReadAliquotDB)
@@ -211,6 +231,8 @@ namespace WpfAliquot
       }
       else if(sender == this.buttonMakeAliquotDB)
       {
+        // TODO: This is having thread problems updating progress???
+        // But other 2 are working OK
         if (!GetUserConfirmationOfAction(
           string.Format(
             "This will generate aliquot chains up to {0:N0} into {1}. Are you sure you want to do this?",
@@ -219,11 +241,11 @@ namespace WpfAliquot
           return;
         }
         ProgressWindow w = new ProgressWindow();
-        Action a = () => MakeAliquotDb(
-          this.textPrimesFile.Text,
-          this.textAdbLimit.Text,
-          this.textAdbFile.Text,
-          w.CreateProgressReporter());
+        string primesFile = this.textPrimesFile.Text;
+        string adbLimit = this.textAdbLimit.Text;
+        string adbFile = this.textAdbFile.Text;
+        var r = w.CreateProgressReporter();
+        Action a = () => MakeAliquotDb(primesFile, adbLimit, adbFile, r);
         w.Launch(a, "Make Aliquot DB");
       }
       else if (sender == this.buttonFindGvDotExe)

@@ -60,6 +60,28 @@ namespace Aliquot.Common
       }
     }
 
+    public static string GetUnderlyingFileName(BinaryWriter writer)
+    {
+      FileStream fs = writer.BaseStream as FileStream;
+      if (fs != null)
+      {
+        return fs.Name;
+      }
+      else
+      {
+        GZipStream gfs = writer.BaseStream as GZipStream;
+        if (gfs != null)
+        {
+          FileStream fs2 = gfs.BaseStream as FileStream;
+          if (fs2 != null)
+          {
+            return fs2.Name + " (gzipped)";
+          }
+        }
+      }
+      return "(nofile)";
+    }
+
     /// <summary>
     /// Input from (possibly compressed) binary streams
     /// </summary>
