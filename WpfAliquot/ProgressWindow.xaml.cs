@@ -51,22 +51,37 @@ namespace WpfAliquot
       this.Dispatcher.Invoke(this.Close);
     }
 
-    public void Launch(Action action, string description)
+    public enum LaunchType
     {
+      Modal,
+      Interactive
+    };
+    public void Launch(Action action, string description, LaunchType launchType = LaunchType.Modal)
+    {
+      IsLaunchedAsDialog = (launchType == LaunchType.Modal);
       this.myTask = Task.Run(action);
       this.myDescripton = description ?? "(null description passed)";
       myTask.ContinueWith(this.UponTaskCompletion);
-      this.Show();
-      this.Activate();
+      if(IsLaunchedAsDialog)
+      {
+        this.ShowDialog();
+      }
+      else
+      {
+        this.Show();
+        this.Activate();
+      }
     }
 
-    public void LaunchModal(Action action, string description)
+    public T LaunchModal<T>(Func<T> func, string description)
     {
       IsLaunchedAsDialog = true;
-      this.myTask = Task.Run(action);
+      // this.myTask = Task.Run(func);
+      var t = Task.Run(func);
       this.myDescripton = description ?? "(null description passed)";
-      myTask.ContinueWith(this.UponTaskCompletion);
+      t.ContinueWith(this.UponTaskCompletion);
       this.ShowDialog();
+      return t.Result;
     }
 
     public Progress<Aliquot.Common.ProgressEventArgs> CreateProgressReporter()

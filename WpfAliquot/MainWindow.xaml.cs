@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Management;
 using System.Numerics;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -115,53 +117,45 @@ namespace WpfAliquot
       }
     }
 
-    static Action CreateActionMakePrimes(
+    static void MakePrimesFile(
       string primesFile,
       string primesLimit,
       Progress<ProgressEventArgs> handler)
     {
-      Action ret = delegate
-      {
-        int sieveLimit = Convert.ToInt32(primesLimit);
-        PrimesGeneratorSieveErat.Generate(primesFile, sieveLimit, handler);
-      };
-      return ret;
+      int sieveLimit = Convert.ToInt32(primesLimit);
+      PrimesGeneratorSieveErat.Generate(primesFile, sieveLimit, handler);
     }
-
-    static Action CreateActionMakeAliquotDb(
+    static void MakeAliquotDb(
       string primesFile,
       string adbLimit,
       string adbFile,
       Progress<ProgressEventArgs> handler)
     {
-      Action ret = delegate
-      {
-        IPrimes p = new PrimesFromFile(primesFile, handler);
-        int dbLimit = int.Parse(adbLimit);
-        var adb = AliquotDatabase.Create(p, dbLimit, handler);
-        adb.SaveAs(adbFile);
-      };
-      return ret;
+      IPrimes p = new PrimesFromFile(primesFile, handler);
+      int dbLimit = int.Parse(adbLimit);
+      var adb = AliquotDatabase.Create(p, dbLimit, handler);
+      adb.SaveAs(adbFile);
     }
-
-    private class ActionReadPrimesFromFile
+    static void MakeTreeGraph(
+      string sTreeRoot,
+      string sTreeLimit,
+      string adbName,
+      string gvOut)
     {
-      public string PrimesFile { get; private set; }
-      public Progress<ProgressEventArgs> Handler { get; private set; }
-      public PrimesFromFile Result { get; private set; }
-      public ActionReadPrimesFromFile(
-        string primesFile,
-        Progress<ProgressEventArgs> handler)
+      BigInteger treeRoot = BigInteger.Parse(sTreeRoot);
+      BigInteger treeLimit = BigInteger.Parse(sTreeLimit);
+      var db = AliquotDatabase.Open(adbName);
+      using (var writer = new StreamWriter(gvOut + ".gv"))
       {
-        PrimesFile = primesFile;
-        Handler = handler;
+        db.WriteTree(treeRoot, treeLimit, writer);
       }
-      public void Run()
-      {
-        Result = new PrimesFromFile(PrimesFile, Handler);
-      }
+      GraphViz.RunDotExe(gvOut, "svg");
     }
 
+    private void ShowInfoDialog(string message, string caption)
+    {
+      MessageBox.Show(message, caption, MessageBoxButton.OK, MessageBoxImage.Information);
+    }
     private bool GetUserConfirmationOfAction(string description)
     {
       return (MessageBoxResult.Yes == MessageBox.Show(
@@ -176,17 +170,17 @@ namespace WpfAliquot
       if(sender == this.buttonReadPrimes)
       {
         ProgressWindow w = new ProgressWindow();
-        var a = new ActionReadPrimesFromFile(
-          this.textPrimesFile.Text, 
-          w.CreateProgressReporter());
-        w.LaunchModal(a.Run, "Read Primes");
-        if(a.Result == null)
+        var primesFile = this.textPrimesFile.Text;
+        var handler = w.CreateProgressReporter();
+        Func<PrimesFromFile> f = () => new PrimesFromFile(primesFile, handler);
+        var result = w.LaunchModal(f, "Read Primes");
+        if (result == null)
         {
           throw new ApplicationException("No Primes File was opened for " + this.textPrimesFile.Text);
         }
         else
         {
-          MessageBox.Show(a.Result.ToString());
+          MessageBox.Show(result.ToString());
         }
       }
       else if (sender == this.buttonMakePrimes)
@@ -199,11 +193,11 @@ namespace WpfAliquot
           return;
         }
         ProgressWindow w = new ProgressWindow();
-        var a = CreateActionMakePrimes(
+        Action a = () => MakePrimesFile(
           this.textPrimesFile.Text,
           this.textPrimesLimit.Text,
           w.CreateProgressReporter());
-        w.LaunchModal(a, "Make Primes");
+        w.Launch(a, "Make Primes");
       }
       else if (sender == this.buttonReadAliquotDB)
       {
@@ -213,7 +207,7 @@ namespace WpfAliquot
         {
           sb.AppendLine(string.Format("{0}={1}", key, db.CreationProperties[key]));
         }
-        MessageBox.Show(sb.ToString(), "Aliquot DB " + this.textAdbFile.Text, MessageBoxButton.OK, MessageBoxImage.Information);
+        ShowInfoDialog(sb.ToString(), "Aliquot DB " + this.textAdbFile.Text);
       }
       else if(sender == this.buttonMakeAliquotDB)
       {
@@ -225,36 +219,33 @@ namespace WpfAliquot
           return;
         }
         ProgressWindow w = new ProgressWindow();
-        var a = CreateActionMakeAliquotDb(
+        Action a = () => MakeAliquotDb(
           this.textPrimesFile.Text,
           this.textAdbLimit.Text,
           this.textAdbFile.Text,
           w.CreateProgressReporter());
-        w.LaunchModal(a, "Make Aliquot DB");
+        w.Launch(a, "Make Aliquot DB");
       }
       else if (sender == this.buttonFindGvDotExe)
       {
         GraphViz.FindDotExe(GetUserInput_Int32_Gui);
         if(GraphViz.HasDotExeLocation())
         {
-          MessageBox.Show("New GraphViz Dot.Exe Location: " + GraphViz.GetDotExeLocation());
+          ShowInfoDialog("New GraphViz Dot.Exe Location: " + GraphViz.GetDotExeLocation(), "GraphViz Dot.Exe");
         }
       }
       else if (sender == this.buttonMakeTree)
       {
         string adbName = this.textAdbFile.Text;
         string sTreeRoot = this.textTreeRoot.Text;
-        BigInteger treeRoot = BigInteger.Parse(sTreeRoot);
         string sTreeLimit = this.textTreeLimit.Text;
-        BigInteger treeLimit = BigInteger.Parse(sTreeLimit);
-        var db = AliquotDatabase.Open(adbName);
         string gvOut = this.textTreeFile.Text;
-        using (var writer = new StreamWriter(gvOut + ".gv"))
-        {
-          db.WriteTree(treeRoot, treeLimit, writer);
-        }
-        GraphViz.RunDotExe(gvOut, "svg");
-        MessageBox.Show("File written to " + System.IO.Path.GetFullPath(gvOut + ".svg"), "Aliquot Tree Creation", MessageBoxButton.OK, MessageBoxImage.Information);
+        MakeTreeGraph(
+          sTreeRoot,
+          sTreeLimit,
+          adbName,
+          gvOut);
+        ShowInfoDialog("File written to " + System.IO.Path.GetFullPath(gvOut + ".svg"), "Aliquot Tree Creation");
       }
       else if (sender == this.buttonExportAdb)
       {
@@ -272,16 +263,14 @@ namespace WpfAliquot
         {
           db.ExportTable(writer, exportLimit, exportFormat);
         }
-        MessageBox.Show(
+        ShowInfoDialog(
           string.Format("File up to {0} written to {1}", sExportLimit, System.IO.Path.GetFullPath(exportFile)),
-          "Aliquot DB Table Export", 
-          MessageBoxButton.OK, 
-          MessageBoxImage.Information);
+          "Aliquot DB Table Export");
       }
       else if (sender == this.buttonOpenExplorer)
       {
-        string directory = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-        System.Diagnostics.Process.Start(directory);
+        string directory = System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        Process.Start(directory);
       }
       UpdateAccordingToGeneratedFiles();
       return;
