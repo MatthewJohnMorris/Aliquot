@@ -8,33 +8,17 @@ namespace Aliquot.Common
   /// <summary>
   /// Allow enumeration of all Prime Numbers
   /// </summary>
-  internal class PrimesEnumerator : IEnumerator<BigInteger>
-  {
-    private readonly IPrimes myPrimes;
-    private int myCurrentIndex;
+  /// 
 
-    public PrimesEnumerator(IPrimes primes)
+  internal class PrimesEnumerator
+  {
+    public static IEnumerator<BigInteger> Create(IPrimes primes)
     {
-      myPrimes = primes;
-      myCurrentIndex = 0;
-      Current = myPrimes[myCurrentIndex];
-    }
-    public BigInteger Current { get; private set; }
-    public void Dispose() { return; }
-    public bool MoveNext()
-    {
-      myCurrentIndex++;
-      Current = myPrimes[myCurrentIndex];
-      return true;
-    }
-    public void Reset()
-    {
-      myCurrentIndex = 0;
-      Current = myPrimes[myCurrentIndex];
-    }
-    object IEnumerator.Current
-    {
-      get { return Current; }
+      for (int index = 0; true; ++index)
+      {
+        yield return primes[index];
+      }
     }
   }
+
 }

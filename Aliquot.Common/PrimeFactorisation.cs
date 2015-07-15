@@ -53,7 +53,10 @@ namespace Aliquot.Common
     {
       myFactorsAndPowers = new List<FactorAndPower>();
 
-      PrimesEnumerator e = new PrimesEnumerator(primes);
+      // PrimesEnumerator e = PrimesEnumerator.GetEnumerator(primes);
+      IEnumerator<BigInteger> e = PrimesEnumerator.Create(primes);
+      e.MoveNext();
+
       var currentPrimeCandidate = e.Current;
       var residue = n;
       BigInteger factorToSave = -1;
