@@ -49,11 +49,16 @@ namespace Aliquot.Common
     {
       myFactorsAndPowers = factorsAndPowers;
     }
+
+    /// <summary>
+    /// Factorise a number by trial division
+    /// </summary>
+    /// <param name="primes">prime number generator</param>
+    /// <param name="n">number to factorise</param>
     public PrimeFactorisation(IPrimes primes, BigInteger n)
     {
       myFactorsAndPowers = new List<FactorAndPower>();
 
-      // PrimesEnumerator e = PrimesEnumerator.GetEnumerator(primes);
       IEnumerator<BigInteger> e = PrimesEnumerator.Create(primes);
       e.MoveNext();
 
@@ -107,6 +112,11 @@ namespace Aliquot.Common
       myFactorsAndPowers.Add(new FactorAndPower(factor: factorToSave, power: powerToSave));
 
     }
+
+    /// <summary>
+    /// Display in human-readable form
+    /// </summary>
+    /// <returns>description of contents</returns>
     public override string ToString()
     {
       var sb = new StringBuilder();
@@ -121,6 +131,13 @@ namespace Aliquot.Common
       return sb.ToString();
     }
 
+    /// <summary>
+    /// Calculate s(n), the sum of all *proper* divisors of n, where
+    /// n is the number that this is a factorisation of. We do
+    /// this by calculating sigma(n), the sum of *all* divisors of n
+    /// - including n itself - then subtracting n.
+    /// </summary>
+    /// <returns>s(n)</returns>
     public BigInteger SumAllProperDivisors()
     {
       BigInteger result = 1;
@@ -140,7 +157,7 @@ namespace Aliquot.Common
           currentFactorPower *= factor;
           termSum += currentFactorPower;
         }
-        // Result is the product of these terms
+        // sigma(n) is the product of these terms
         result *= termSum;
         // We also construct n as we go
         n *= currentFactorPower;
@@ -153,6 +170,10 @@ namespace Aliquot.Common
       return result;
     }
 
+    /// <summary>
+    /// Write to binary file
+    /// </summary>
+    /// <param name="writer">writer to put information out on</param>
     public void Write(BinaryWriter writer)
     {
       writer.Write((UInt64)FactorsAndPowers.Count);
@@ -162,6 +183,12 @@ namespace Aliquot.Common
         writer.Write((UInt64)factorAndPower.Power);
       }
     }
+
+    /// <summary>
+    /// Read from binary file
+    /// </summary>
+    /// <param name="reader">reader to get information from</param>
+    /// <returns>new object</returns>
     public static PrimeFactorisation Create(BinaryReader reader)
     {
       var factorsAndPowers = new List<FactorAndPower>();

@@ -3,14 +3,21 @@ using System.Numerics;
 
 namespace Aliquot.Common
 {
-  public class AliquotSuccessor
+  /// <summary>
+  /// Holds a link in an Aliquot chain (or Current and an exception if a link could not be
+  /// calcualted).
+  /// </summary>
+  public class AliquotChainLink
   {
+    /// <summary>
+    /// Properties
+    /// </summary>
     public BigInteger Current { get; private set; }
     public BigInteger Successor { get; private set; }
     public PrimeFactorisation Factorisation { get; private set; }
     public Exception Exception { get; private set; }
 
-    public AliquotSuccessor(BigInteger current, BigInteger successor, PrimeFactorisation factorisation)
+    public AliquotChainLink(BigInteger current, BigInteger successor, PrimeFactorisation factorisation)
     {
       Current = current;
       Successor = successor;
@@ -18,7 +25,7 @@ namespace Aliquot.Common
       Exception = null;
     }
 
-    public AliquotSuccessor(IPrimes p, BigInteger n)
+    public AliquotChainLink(IPrimes p, BigInteger n)
     {
       Current = n;
       Successor = 0;

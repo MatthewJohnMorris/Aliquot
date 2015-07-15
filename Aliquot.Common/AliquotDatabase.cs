@@ -10,16 +10,16 @@ namespace Aliquot.Common
 {
   public class AliquotDatabase
   {
-    public Dictionary<BigInteger, AliquotSuccessor> Links { get; private set; }
+    public Dictionary<BigInteger, AliquotChainLink> Links { get; private set; }
     public Dictionary<string, string> CreationProperties { get; private set; }
 
     private AliquotDatabase()
     {
-      Links = new Dictionary<BigInteger, AliquotSuccessor>();
+      Links = new Dictionary<BigInteger, AliquotChainLink>();
       CreationProperties = new Dictionary<string, string>();
     }
     public AliquotDatabase(
-      Dictionary<BigInteger, AliquotSuccessor> links,
+      Dictionary<BigInteger, AliquotChainLink> links,
       Dictionary<string, string> creationProperties)
     {
       Links = links;
@@ -38,7 +38,7 @@ namespace Aliquot.Common
       Utilities.LogLine("AliquotDatabase: Create to {0}, Successor Limit {1} ({2} digits)", dbLimit, upperLimit, upperLimit.ToString().Length);
       creationProperties["Create.UpperLimit"] = upperLimit.ToString();
 
-      var links = new Dictionary<BigInteger, AliquotSuccessor>();
+      var links = new Dictionary<BigInteger, AliquotChainLink>();
       DateTime dtStart = DateTime.UtcNow;
 
       int progress = 0;
@@ -49,7 +49,7 @@ namespace Aliquot.Common
         seq.Add(n);
         while(n > 1 && n < upperLimit && seq.Count < 200)
         {
-          var s = new AliquotSuccessor(p, n);
+          var s = new AliquotChainLink(p, n);
           if (s.Successor > upperLimit) { break; }
           links[n] = s;
           if (seq.Contains(s.Successor)) { break; }
@@ -139,7 +139,7 @@ namespace Aliquot.Common
     }
     public void Reader(BinaryReader reader)
     {
-      Links = new Dictionary<BigInteger, AliquotSuccessor>();
+      Links = new Dictionary<BigInteger, AliquotChainLink>();
       CreationProperties = new Dictionary<string, string>(CreationProperties);
 
       // format
@@ -169,7 +169,7 @@ namespace Aliquot.Common
         UInt64 current = reader.ReadUInt64();
         UInt64 successor = reader.ReadUInt64();
         var pf = PrimeFactorisation.Create(reader);
-        Links[current] = new AliquotSuccessor(current, successor, pf);
+        Links[current] = new AliquotChainLink(current, successor, pf);
       }
       DateTime dtEnd = DateTime.UtcNow;
       double sec = (dtEnd - dtStart).TotalSeconds;
@@ -214,7 +214,7 @@ namespace Aliquot.Common
 
     }
 
-    private string CalcColor(AliquotSuccessor s)
+    private string CalcColor(AliquotChainLink s)
     {
       if(s.Factorisation.FactorsAndPowers.Count == 1)
       {
