@@ -180,20 +180,18 @@ namespace Aliquot.Common
     {
       // Build reverse links
       var reverseLinks = new Dictionary<BigInteger, List<BigInteger>>();
-      foreach(BigInteger from in Links.Keys)
+
+      foreach(var link in Links.Values
+        .Where((x) => x.Current <= limit)
+        .Where((x) => x.Successor <= limit)
+        )
       {
-        if(from <= limit)
+        BigInteger to = link.Successor;
+        if (!reverseLinks.ContainsKey(to))
         {
-          BigInteger to = Links[from].Successor;
-          if(to <= limit)
-          {
-            if(! reverseLinks.ContainsKey(to))
-            {
-              reverseLinks[to] = new List<BigInteger>();
-            }
-            reverseLinks[to].Add(from);
-          }
+          reverseLinks[to] = new List<BigInteger>();
         }
+        reverseLinks[to].Add(link.Current);
       }
 
       var allNodesInTree = new HashSet<BigInteger>();
@@ -293,8 +291,7 @@ namespace Aliquot.Common
         }
         BigInteger s = Links[n].Successor;
         bool isFound = false;
-        foreach(var aliquotRootSet in aliquotRootSets)
-        {
+        foreach(var aliquotRootSet in aliquotRootSets)        {
           if (aliquotRootSet.Contains(s))
           {
             aliquotRootSet.Add(n);

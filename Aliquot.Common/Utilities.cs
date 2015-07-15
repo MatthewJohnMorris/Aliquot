@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.IO.Compression;
 using System.Diagnostics;
 
@@ -45,6 +46,20 @@ namespace Aliquot.Common
       }
     }
 
+    public static TResult WriteFileAndReturnValue<TResult>(
+      string path,
+      Func<BinaryWriter, TResult> func,
+      FileMode fileMode = FileMode.Create)
+    {
+      using (var fileStream = System.IO.File.Open(path, fileMode))
+      {
+        using (var writer = new BinaryWriter(fileStream))
+        {
+          return func(writer);
+        }
+      }
+    }
+
     /// <summary>
     /// Input from (possibly compressed) binary streams
     /// </summary>
@@ -67,6 +82,22 @@ namespace Aliquot.Common
           {
             func(reader);
           }
+        }
+      }
+    }
+
+    /// <summary>
+    /// Read from a normal file.
+    /// </summary>
+    /// <param name="path">file to read from</param>
+    /// <param name="func">reading function</param>
+    public static void ReadFile(string path, InputFromBinaryReader func)
+    {
+      using (var fileStream = File.Open(path, FileMode.Open, FileAccess.Read))
+      {
+        using (var reader = new BinaryReader(fileStream))
+        {
+          func(reader);
         }
       }
     }
