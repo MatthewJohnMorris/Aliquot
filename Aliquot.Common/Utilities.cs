@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 namespace Aliquot.Common
 {
-  internal class Utilities
+  internal static class Utilities
   {
     public static void Log(string s) { Trace.Write(s); }
     public static void Log(string s, object o1) { Trace.Write(string.Format(s, o1)); }
