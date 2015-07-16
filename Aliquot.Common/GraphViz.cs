@@ -46,16 +46,16 @@ namespace Aliquot.Common
       var files = new List<string>(Directory.GetFiles(pathProgramFilesX86, fileToFind, SearchOption.AllDirectories));
       if(files.Count == 0)
       {
-        throw new ApplicationException(string.Format("Could not find [{0}] in [{1}]", fileToFind, pathProgramFilesX86));
+        throw new FileNotFoundException(string.Format("Could not find [{0}] in [{1}]", fileToFind, pathProgramFilesX86));
       }
       int nInput = userInput(files);
       if(nInput < 0)
       {
-        throw new ApplicationException(string.Format("Input ({0}) is less than minimum allowed (0)", nInput));
+        throw new IndexOutOfRangeException(string.Format("Input ({0}) is less than minimum allowed (0)", nInput));
       }
       if (nInput >= files.Count)
       {
-        throw new ApplicationException(string.Format("Input ({0}) is greater than maximum allowed ({1})", nInput, files.Count - 1));
+        throw new IndexOutOfRangeException(string.Format("Input ({0}) is greater than maximum allowed ({1})", nInput, files.Count - 1));
       }
       using(var w = new StreamWriter(GraphViz.FileNameGvDotLocation))
       {
@@ -71,7 +71,7 @@ namespace Aliquot.Common
     {
       if (!System.IO.File.Exists(GraphViz.FileNameGvDotLocation))
       {
-        throw new ApplicationException(string.Format("No GvDot file present at {0}", GraphViz.FileNameGvDotLocation));
+        throw new FileNotFoundException(string.Format("No GvDot file present at {0}", GraphViz.FileNameGvDotLocation));
       }
       using (var r = new StreamReader(GraphViz.FileNameGvDotLocation))
       {
@@ -105,11 +105,11 @@ namespace Aliquot.Common
         exeProcess.WaitForExit(processTimeoutInMilliseconds);
         if (!exeProcess.HasExited)
         {
-          throw new ApplicationException(string.Format("Has not exited after timeout of {0} ms: [{1} {2}]", processTimeoutInMilliseconds, gvdotLocation, arguments));
+          throw new AliquotException(string.Format("Has not exited after timeout of {0} ms: [{1} {2}]", processTimeoutInMilliseconds, gvdotLocation, arguments));
         }
         if(exeProcess.ExitCode != 0)
         {
-          throw new ApplicationException(string.Format("Non-zero exit code {0} from [{1} {2}]", exeProcess.ExitCode, gvdotLocation, arguments));
+          throw new AliquotException(string.Format("Non-zero exit code {0} from [{1} {2}]", exeProcess.ExitCode, gvdotLocation, arguments));
         }
       } // using: process
     }

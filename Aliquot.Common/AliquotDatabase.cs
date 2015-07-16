@@ -142,7 +142,7 @@ namespace Aliquot.Common
       Utilities.LogLine("ADB format: {0}", adbFormat);
       if (adbFormat != "adb.1")
       {
-        throw new ApplicationException(string.Format("Unexpected ADB Format [{0}]", adbFormat));
+        throw new AliquotException(string.Format("Unexpected ADB Format [{0}]", adbFormat));
       }
       // # properties
       UInt64 numProperties = reader.ReadUInt64();
@@ -155,7 +155,7 @@ namespace Aliquot.Common
       }
       if (!CreationProperties.ContainsKey("Count"))
       {
-        throw new ApplicationException("ADB file did not have 'Count' property");
+        throw new AliquotException("ADB file did not have 'Count' property");
       }
       UInt64 count = UInt64.Parse(CreationProperties["Count"]);
       DateTime dtStart = DateTime.UtcNow;
@@ -283,7 +283,7 @@ namespace Aliquot.Common
       {
         if(! Links.ContainsKey(n))
         {
-          throw new ApplicationException(string.Format("Number {0} not contained in Links for ADB", n));
+          throw new AliquotException(string.Format("Number {0} not contained in Links for ADB", n));
         }
         BigInteger s = Links[n].Successor;
         bool isFound = false;
