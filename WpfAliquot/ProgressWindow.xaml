@@ -1,10 +1,14 @@
 ﻿<Window x:Class="WpfAliquot.ProgressWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Progress" Height="99" Width="395">
+        Title="Progress" Height="126" Width="395" ResizeMode="NoResize" Closed="Window_Closed">
+  <Window.TaskbarItemInfo>
+    <TaskbarItemInfo/>
+  </Window.TaskbarItemInfo>
   <Grid>
-    <ProgressBar x:Name="progressbar" HorizontalAlignment="Left" Margin="38,36,0,10" Width="320" Foreground="#FF01C0D3"/>
+    <ProgressBar x:Name="progressbar" HorizontalAlignment="Left" Margin="38,36,0,37" Width="320" Foreground="#FF01C0D3"/>
     <TextBox x:Name="textboxDescription" HorizontalAlignment="Left" Height="21" Margin="10,10,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="367" BorderThickness="0"/>
+    <Button x:Name="buttonCancel" Content="Cancel" HorizontalAlignment="Left" Height="22" Margin="159,64,0,0" VerticalAlignment="Top" Width="70" Click="buttonCancel_Click"/>
 
   </Grid>
 </Window>

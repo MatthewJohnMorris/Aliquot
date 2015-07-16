@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Numerics;
+using System.Threading;
 
 namespace Aliquot.Common
 {
@@ -12,7 +13,8 @@ namespace Aliquot.Common
     public static void Generate(
       string path,
       int maxPrime,
-      Progress<ProgressEventArgs> progressIndicator = null)
+      Progress<ProgressEventArgs> progressIndicator = null,
+      CancellationToken? maybeCancellationToken = null)
     {
       string tempPath = System.IO.Path.GetTempFileName();
       try
@@ -22,7 +24,7 @@ namespace Aliquot.Common
           tempPath,
           (writer) =>
             PrimesGeneratorSieveErat.GenerateAndWriteOutPrimes(
-              writer, maxPrime, progressIndicator),
+              writer, maxPrime, progressIndicator, maybeCancellationToken),
           FileMode.Open);
 
         // Second pass re-writes, with #primes header, to compressed file
@@ -30,7 +32,7 @@ namespace Aliquot.Common
           (writer) =>
             Utilities.ReadFile( tempPath,
               (reader) =>
-                CreateFinalOutput(reader, writer, numPrimes, progressIndicator)
+                CreateFinalOutput(reader, writer, numPrimes, progressIndicator, maybeCancellationToken)
                 )
                 );
       }
@@ -49,7 +51,8 @@ namespace Aliquot.Common
       BinaryReader reader, 
       BinaryWriter writer,
       int numPrimes,
-      Progress<ProgressEventArgs> progressIndicator)
+      Progress<ProgressEventArgs> progressIndicator,
+      CancellationToken? maybeCancellationToken)
     {
       // First, write the count of primes
       writer.Write((Int32)numPrimes);
@@ -61,6 +64,10 @@ namespace Aliquot.Common
       {
         if (i % updateEvery == 0)
         {
+          if(maybeCancellationToken.HasValue)
+          {
+            maybeCancellationToken.Value.ThrowIfCancellationRequested();
+          }
           int percent = (numPrimes < 100) ? i * 100 / numPrimes : i / (numPrimes / 100);
           ProgressEventArgs.RaiseEvent(progressIndicator, percent, string.Format("PrimesSieveErat writing primes"));
         }
@@ -77,7 +84,8 @@ namespace Aliquot.Common
     private static int GenerateAndWriteOutPrimes(
       BinaryWriter writer,
       int maxPrime,
-      Progress<ProgressEventArgs> progressIndicator = null)
+      Progress<ProgressEventArgs> progressIndicator = null,
+      CancellationToken? maybeCancellationToken = null)
     {
       // First prime (2)
       writer.Write((Int32)2);
@@ -113,6 +121,11 @@ namespace Aliquot.Common
           // Progress Reporting
           if (i > nextReport && nextReport > 0)
           {
+            if(maybeCancellationToken.HasValue)
+            {
+              maybeCancellationToken.Value.ThrowIfCancellationRequested();
+            }
+
             progressSum += Math.Log10((double)(maxPrime / nextReport));
             nextReport += i;
             int percent = (int)(progressSum * 100.0 / sizeSum);

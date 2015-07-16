@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -22,10 +23,13 @@ namespace WpfAliquot
     public bool IsLaunchedAsDialog { get; private set; }
     private Task myTask = null;
     private string myDescripton = null;
+    private CancellationTokenSource myCancellationTokenSource;
 
     public ProgressWindow()
     {
       IsLaunchedAsDialog = false;
+      myCancellationTokenSource = new CancellationTokenSource();
+
       InitializeComponent();
     }
 
@@ -94,5 +98,20 @@ namespace WpfAliquot
       this.textboxDescription.Text = args.Message;
     }
   
+    public CancellationToken GetCancellationToken()
+    {
+      return myCancellationTokenSource.Token;
+    }
+
+    private void buttonCancel_Click(object sender, RoutedEventArgs e)
+    {
+      myCancellationTokenSource.Cancel();
+    }
+
+    private void Window_Closed(object sender, EventArgs e)
+    {
+      myCancellationTokenSource.Cancel();
+    }
+
   }
 }

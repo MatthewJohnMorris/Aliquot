@@ -7,6 +7,7 @@ using System.Management;
 using System.Numerics;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -81,6 +82,7 @@ namespace WpfAliquot
 
       EnableButtonIfPresent(this.buttonReadPrimes);
       EnableButtonIfPresent(this.buttonMakeAliquotDB);
+      EnableButtonIfPresent(this.buttonReadAliquotDB);
       EnableButtonIfPresent(this.buttonMakeTree);
       EnableButtonIfPresent(this.buttonExportAdb);
 
@@ -120,39 +122,23 @@ namespace WpfAliquot
     static void MakePrimesFile(
       string primesFile,
       string primesLimit,
-      Progress<ProgressEventArgs> handler)
+      Progress<ProgressEventArgs> handler,
+      CancellationToken cancellationToken)
     {
       int sieveLimit = Convert.ToInt32(primesLimit);
-      PrimesGeneratorSieveErat.Generate(primesFile, sieveLimit, handler);
-    }
-    public class ActionMakePrimesFile
-    {
-      public string PrimesFile { get; private set; }
-      public string PrimesLimit { get; private set; }
-      public Progress<ProgressEventArgs> Handler { get; private set; }
-      public ActionMakePrimesFile(
-        string primesFile, string primesLimit, Progress<ProgressEventArgs> handler)
-      {
-        PrimesFile = primesFile;
-        PrimesLimit = primesLimit;
-        Handler = handler;
-      }
-      public void Run()
-      {
-        int sieveLimit = Convert.ToInt32(PrimesLimit);
-        PrimesGeneratorSieveErat.Generate(PrimesFile, sieveLimit, Handler);
-      }
+      PrimesGeneratorSieveErat.Generate(primesFile, sieveLimit, handler, cancellationToken);
     }
 
     static void MakeAliquotDb(
       string primesFile,
       string adbLimit,
       string adbFile,
-      Progress<ProgressEventArgs> handler)
+      Progress<ProgressEventArgs> handler,
+      CancellationToken cancellationToken)
     {
-      IPrimes p = new PrimesFromFile(primesFile, handler);
+      IPrimes p = new PrimesFromFile(primesFile, handler, cancellationToken);
       int dbLimit = int.Parse(adbLimit);
-      var adb = AliquotDatabase.Create(p, dbLimit, handler);
+      var adb = AliquotDatabase.Create(p, dbLimit, handler, cancellationToken);
       adb.SaveAs(adbFile);
     }
 
@@ -192,7 +178,8 @@ namespace WpfAliquot
         ProgressWindow w = new ProgressWindow();
         string primesFile = this.textPrimesFile.Text;
         var handler = w.CreateProgressReporter();
-        Func<PrimesFromFile> f = () => new PrimesFromFile(primesFile, handler);
+        var ct = w.GetCancellationToken();
+        Func<PrimesFromFile> f = () => new PrimesFromFile(primesFile, handler, ct);
         var result = w.LaunchModal(f, "Read Primes");
         if (result == null)
         {
@@ -216,7 +203,8 @@ namespace WpfAliquot
         var r = w.CreateProgressReporter();
         string primesFile = this.textPrimesFile.Text;
         string primesLimit = this.textPrimesLimit.Text;
-        Action a = () => MakePrimesFile(primesFile, primesLimit, r);
+        var ct = w.GetCancellationToken();
+        Action a = () => MakePrimesFile(primesFile, primesLimit, r, ct);
         w.Launch(a, "Make Primes");
       }
       else if (sender == this.buttonReadAliquotDB)
@@ -245,7 +233,8 @@ namespace WpfAliquot
         string adbLimit = this.textAdbLimit.Text;
         string adbFile = this.textAdbFile.Text;
         var r = w.CreateProgressReporter();
-        Action a = () => MakeAliquotDb(primesFile, adbLimit, adbFile, r);
+        var ct = w.GetCancellationToken();
+        Action a = () => MakeAliquotDb(primesFile, adbLimit, adbFile, r, ct);
         w.Launch(a, "Make Aliquot DB");
       }
       else if (sender == this.buttonFindGvDotExe)

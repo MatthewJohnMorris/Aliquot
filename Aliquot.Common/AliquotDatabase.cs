@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Numerics;
+using System.Threading;
 
 namespace Aliquot.Common
 {
@@ -29,7 +30,8 @@ namespace Aliquot.Common
     public static AliquotDatabase Create(
       IPrimes p, 
       int dbLimit,
-      Progress<ProgressEventArgs> progressIndicator = null)
+      Progress<ProgressEventArgs> progressIndicator = null,
+      CancellationToken? maybeCancellationToken = null)
     {
       var creationProperties = new Dictionary<string, string>();
       creationProperties["Create.ChainStartLimit"] = dbLimit.ToString();
@@ -66,6 +68,11 @@ namespace Aliquot.Common
         int newProgress = (int)(100.0 * i / dbLimit);
         if (newProgress > progress)
         {
+          if(maybeCancellationToken.HasValue)
+          {
+            maybeCancellationToken.Value.ThrowIfCancellationRequested();
+          }
+
           DateTime dtNow = DateTime.UtcNow;
           var diff = dtNow - dtStart;
           double s = diff.TotalSeconds;

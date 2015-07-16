@@ -3,24 +3,30 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Threading;
 
 namespace Aliquot.Common
 {
   public class PrimesFromFile : IPrimes
   {
     public enum ShowLoadProgress { Yes, No }
-    private readonly List<int> myPrimes;
+    private int[] myPrimes;
     private IProgress<ProgressEventArgs> myProgressIndicator;
+    private CancellationToken? myMaybeCancellationToken;
 
     public override string ToString()
     {
-      return string.Format("PrimesFromFile: {0:N0} primes, highest {1:N0}", myPrimes.Count, myPrimes.Last());
+      return string.Format("PrimesFromFile: {0:N0} primes, highest {1:N0}", myPrimes.Length, myPrimes.Last());
     }
 
-    public PrimesFromFile(string path, Progress<ProgressEventArgs> handler = null)
+    public PrimesFromFile(
+      string path, 
+      Progress<ProgressEventArgs> progressIndicator = null,
+      CancellationToken? maybeCancellationToken = null)
     {
-      myProgressIndicator = handler;
-      myPrimes = new List<int>();
+      myPrimes = null;
+      myProgressIndicator = progressIndicator;
+      myMaybeCancellationToken = maybeCancellationToken;
 
       Utilities.ReadCompressedFile(path, this.InputFromBinaryReader);
     }
@@ -30,6 +36,7 @@ namespace Aliquot.Common
       ProgressEventArgs.RaiseEvent(myProgressIndicator, 0, "PrimesFromFile: Start");
 
       int n = reader.ReadInt32();
+      myPrimes = new int[n];
       int n100 = n/100;
       int c = 0;
       for(int i = 0; i < n; ++i)
@@ -37,6 +44,12 @@ namespace Aliquot.Common
         if (c++ == n100)
         {
           c = 0;
+
+          // Check for cancellation
+          if(myMaybeCancellationToken.HasValue)
+          {
+            myMaybeCancellationToken.Value.ThrowIfCancellationRequested();
+          }
 
           // Raise progress message
           string message = string.Format("PrimesFromFile: Read {0:N0} of {1:N0}", i, n);
@@ -46,7 +59,7 @@ namespace Aliquot.Common
           int percent = int.Parse(b_percent.ToString());
           ProgressEventArgs.RaiseEvent(myProgressIndicator, percent, message);
         }
-        myPrimes.Add(reader.ReadInt32());
+        myPrimes[i] = reader.ReadInt32();
       }
     }
 
