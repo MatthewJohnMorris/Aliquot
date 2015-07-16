@@ -17,6 +17,7 @@ namespace Aliquot.Common
       CancellationToken? maybeCancellationToken = null)
     {
       string tempPath = System.IO.Path.GetTempFileName();
+      string tempPath2 = System.IO.Path.GetTempFileName();
       try
       {
         // First pass just writes primes out to uncompressed temp file
@@ -28,13 +29,20 @@ namespace Aliquot.Common
           FileMode.Open);
 
         // Second pass re-writes, with #primes header, to compressed file
-        Utilities.WriteCompressedFile( path,
+        Action<BinaryWriter> writerFunction = 
           (writer) =>
-            Utilities.ReadFile( tempPath,
+            Utilities.ReadFile(
+              tempPath,
               (reader) =>
                 CreateFinalOutput(reader, writer, numPrimes, progressIndicator, maybeCancellationToken)
-                )
                 );
+        Utilities.WriteCompressedFile(
+          tempPath2,
+          writerFunction,
+          FileMode.Open);
+
+        // Finally rename
+        File.Move(tempPath2, path);
       }
       finally
       {

@@ -28,9 +28,10 @@ namespace Aliquot.Common
     /// <param name="func">writing function</param>
     public static void WriteCompressedFile(
       string path, 
-      Action<BinaryWriter> func)
+      Action<BinaryWriter> func,
+      FileMode fileMode = FileMode.Create)
     {
-      using(var fileStream = File.Create(path))
+      using (var fileStream = System.IO.File.Open(path, fileMode))
       {
         using(var compressedStream = new GZipStream(fileStream, CompressionMode.Compress))
         {

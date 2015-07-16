@@ -175,7 +175,7 @@ namespace WpfAliquot
         MessageBoxImage.Question));
     }
 
-    async private void AsyncReadPrimes()
+    async private void ReadPrimesAsync()
     {
       ProgressWindow w = new ProgressWindow();
       string primesFile = this.textPrimesFile.Text;
@@ -185,6 +185,7 @@ namespace WpfAliquot
       try
       {
         PrimesFromFile result = await w.LaunchAsync(f, "Read Primes");
+        UpdateAccordingToGeneratedFiles();
         ShowInfoDialog(result.ToString(), "Read Primes");
       }
       catch(Exception e)
@@ -192,7 +193,7 @@ namespace WpfAliquot
         ShowExceptionDialog(e, "Read Primes");
       }
     }
-    async private void AsyncMakePrimes()
+    async private void MakePrimesAsync()
     {
       ProgressWindow w = new ProgressWindow();
       var r = w.CreateProgressReporter();
@@ -203,13 +204,14 @@ namespace WpfAliquot
       try
       {
         await w.LaunchAsync(a, "Make Primes");
+        UpdateAccordingToGeneratedFiles();
       }
       catch(Exception e)
       {
         ShowExceptionDialog(e, "Make Primes");
       }
     }
-    async private void AsyncMakeAliquotDB()
+    async private void MakeAliquotDBAsync()
     {
       ProgressWindow w = new ProgressWindow();
       string primesFile = this.textPrimesFile.Text;
@@ -221,6 +223,7 @@ namespace WpfAliquot
       try
       {
         await w.LaunchAsync(a, "Make Aliquot DB");
+        UpdateAccordingToGeneratedFiles();
       }
       catch (Exception e)
       {
@@ -232,7 +235,7 @@ namespace WpfAliquot
     { 
       if(sender == this.buttonReadPrimes)
       {
-        AsyncReadPrimes();
+        ReadPrimesAsync();
       }
       else if (sender == this.buttonMakePrimes)
       {
@@ -243,7 +246,7 @@ namespace WpfAliquot
         {
           return;
         }
-        AsyncMakePrimes();
+        MakePrimesAsync();
       }
       else if (sender == this.buttonReadAliquotDB)
       {
@@ -264,7 +267,7 @@ namespace WpfAliquot
         {
           return;
         }
-        AsyncMakeAliquotDB();
+        MakeAliquotDBAsync();
       }
       else if (sender == this.buttonFindGvDotExe)
       {

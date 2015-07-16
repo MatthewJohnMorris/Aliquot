@@ -49,7 +49,7 @@ namespace Aliquot.Common
         // Build the chain onwards from this number
         BigInteger n = i;
         int chainLength = 0;
-        while (n > 1 && n < upperLimit && chainLength < 200)
+        while (n > 1 && n < upperLimit && chainLength < 300)
         {
           // Get the new link
           var s = new AliquotChainLink(p, n);
@@ -90,7 +90,23 @@ namespace Aliquot.Common
 
     public void SaveAs(string path)
     {
-      Utilities.WriteCompressedFile(path, Writer);
+      string tempPath = System.IO.Path.GetTempFileName();
+      try
+      {
+        // Write file out to temporary location
+        Utilities.WriteCompressedFile(tempPath, Writer);
+
+        // Finally rename
+        File.Move(tempPath, path);
+      }
+      finally
+      {
+        try
+        {
+          File.Delete(tempPath);
+        }
+        catch (Exception) { }
+      }
     }
     private void Writer(BinaryWriter writer)
     {
