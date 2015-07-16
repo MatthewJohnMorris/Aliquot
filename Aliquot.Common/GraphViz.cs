@@ -20,8 +20,6 @@ namespace Aliquot.Common
     /// </summary>
     public const string FileNameGvDotLocation = "aliquot.gvdotlocation";
 
-    public delegate int GetUserInput_Int32(List<string> choices);
-
     public static int GetUserInput_Int32_Console(List<string> choices)
     {
       Console.Out.WriteLine("Choices are as followes:");
@@ -40,7 +38,7 @@ namespace Aliquot.Common
     /// Interactive function to list all instances of dot.exe off ProgramFilesX86 and to let the 
     /// user select one to use for graphing.
     /// </summary>
-    public static void FindDotExe(GetUserInput_Int32 userInput)
+    public static void FindDotExe(Func<List<string>, int> userInput)
     {
       var pathProgramFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
       string fileToFind = "dot.exe";
