@@ -184,7 +184,7 @@ namespace WpfAliquot
       Func<PrimesFromFile> f = () => new PrimesFromFile(primesFile, handler, ct);
       try
       {
-        PrimesFromFile result = await w.LaunchAsync(f, "Read Primes");
+        PrimesFromFile result = await w.LaunchAsyncWithReturn(f, "Read Primes");
         UpdateAccordingToGeneratedFiles();
         ShowInfoDialog(result.ToString(), "Read Primes");
       }

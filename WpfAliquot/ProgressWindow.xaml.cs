@@ -45,22 +45,25 @@ namespace WpfAliquot
       this.Dispatcher.Invoke(this.Close);
     }
 
-    public Task LaunchAsync(Action action, string description)
+    private void ShowAndActivateWithDescription(string description)
     {
-      var task = Task.Run(action);
       this.myDescription = description ?? "(null description passed)";
-      task.ContinueWith(this.UponTaskCompletion);
       this.Show();
       this.Activate();
+    }
+
+    public Task LaunchAsync(Action action, string description)
+    {
+      ShowAndActivateWithDescription(description);
+      var task = Task.Run(action);
+      task.ContinueWith(this.UponTaskCompletion);
       return task;
     }
 
-    public Task<T> LaunchAsync<T>(Func<T> func, string description)
+    public Task<T> LaunchAsyncWithReturn<T>(Func<T> func, string description)
     {
+      ShowAndActivateWithDescription(description);
       var task = Task.Run(func);
-      this.myDescription = description ?? "(null description passed)";
-      this.Show();
-      this.Activate();
       task.ContinueWith(this.UponTaskCompletion);
       return task;
     }
