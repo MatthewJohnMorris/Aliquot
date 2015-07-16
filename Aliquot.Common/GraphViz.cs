@@ -105,11 +105,11 @@ namespace Aliquot.Common
         exeProcess.WaitForExit(processTimeoutInMilliseconds);
         if (!exeProcess.HasExited)
         {
-          throw new AliquotException(string.Format("Has not exited after timeout of {0} ms: [{1} {2}]", processTimeoutInMilliseconds, gvdotLocation, arguments));
+          throw new TimeoutException(string.Format("Has not exited after timeout of {0} ms: [{1} {2}]", processTimeoutInMilliseconds, gvdotLocation, arguments));
         }
         if(exeProcess.ExitCode != 0)
         {
-          throw new AliquotException(string.Format("Non-zero exit code {0} from [{1} {2}]", exeProcess.ExitCode, gvdotLocation, arguments));
+          throw new InvalidDataException(string.Format("Non-zero exit code {0} from [{1} {2}]", exeProcess.ExitCode, gvdotLocation, arguments));
         }
       } // using: process
     }

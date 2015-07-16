@@ -42,7 +42,6 @@
   <ItemGroup>
     <Compile Include="AliquotDatabase.cs" />
     <Compile Include="AliquotChainLink.cs" />
-    <Compile Include="AliquotException.cs" />
     <Compile Include="GraphViz.cs" />
     <Compile Include="IPrimes.cs" />
     <Compile Include="PrimeEnumerator.cs" />

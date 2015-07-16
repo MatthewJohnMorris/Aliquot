@@ -183,7 +183,7 @@ namespace WpfAliquot
         var result = w.LaunchModal(f, "Read Primes");
         if (result == null)
         {
-          throw new AliquotException("No Primes File was opened for " + this.textPrimesFile.Text);
+          throw new InvalidDataException("No Primes File was opened for " + this.textPrimesFile.Text);
         }
         else
         {
