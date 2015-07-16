@@ -60,7 +60,7 @@ namespace WpfAliquot
       return task;
     }
 
-    public Task<T> LaunchAsyncWithReturn<T>(Func<T> func, string description)
+    public Task<T> LaunchAsync<T>(Func<T> func, string description)
     {
       ShowAndActivateWithDescription(description);
       var task = Task.Run(func);

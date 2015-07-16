@@ -184,7 +184,7 @@ namespace WpfAliquot
       Func<PrimesFromFile> f = () => new PrimesFromFile(primesFile, handler, ct);
       try
       {
-        PrimesFromFile result = await w.LaunchAsyncWithReturn(f, "Read Primes");
+        PrimesFromFile result = await w.LaunchAsync(f, "Read Primes");
         UpdateAccordingToGeneratedFiles();
         ShowInfoDialog(result.ToString(), "Read Primes");
       }
@@ -196,11 +196,11 @@ namespace WpfAliquot
     async private void MakePrimesAsync()
     {
       ProgressWindow w = new ProgressWindow();
-      var r = w.CreateProgressReporter();
       string primesFile = this.textPrimesFile.Text;
       string primesLimit = this.textPrimesLimit.Text;
+      var handler = w.CreateProgressReporter();
       var ct = w.GetCancellationToken();
-      Action a = () => MakePrimesFile(primesFile, primesLimit, r, ct);
+      Action a = () => MakePrimesFile(primesFile, primesLimit, handler, ct);
       try
       {
         await w.LaunchAsync(a, "Make Primes");
@@ -217,9 +217,9 @@ namespace WpfAliquot
       string primesFile = this.textPrimesFile.Text;
       string adbLimit = this.textAdbLimit.Text;
       string adbFile = this.textAdbFile.Text;
-      var r = w.CreateProgressReporter();
+      var handler = w.CreateProgressReporter();
       var ct = w.GetCancellationToken();
-      Action a = () => MakeAliquotDb(primesFile, adbLimit, adbFile, r, ct);
+      Action a = () => MakeAliquotDb(primesFile, adbLimit, adbFile, handler, ct);
       try
       {
         await w.LaunchAsync(a, "Make Aliquot DB");
