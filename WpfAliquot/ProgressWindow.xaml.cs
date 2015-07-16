@@ -20,14 +20,11 @@ namespace WpfAliquot
   /// </summary>
   public partial class ProgressWindow : Window
   {
-    public bool IsLaunchedAsDialog { get; private set; }
-    private Task myTask = null;
-    private string myDescripton = null;
+    private string myDescription = null;
     private CancellationTokenSource myCancellationTokenSource;
 
     public ProgressWindow()
     {
-      IsLaunchedAsDialog = false;
       myCancellationTokenSource = new CancellationTokenSource();
 
       InitializeComponent();
@@ -43,61 +40,29 @@ namespace WpfAliquot
         {
           sb.AppendLine("-" + ex.Message);
         }
-        MessageBox.Show(sb.ToString(), "Exception Found In Task '" + myDescripton + "'", MessageBoxButton.OK, MessageBoxImage.Exclamation);
-      }
-      else
-      {
-        if (!IsLaunchedAsDialog)
-        {
-          MessageBox.Show("Task Completed Successfully", "Task '" + myDescripton + "'", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
+        MessageBox.Show(sb.ToString(), "Exception Found In Task '" + myDescription + "'", MessageBoxButton.OK, MessageBoxImage.Exclamation);
       }
       this.Dispatcher.Invoke(this.Close);
     }
 
-    public enum LaunchType
+    public Task LaunchAsync(Action action, string description)
     {
-      Modal,
-      Interactive
-    };
-    public void Launch(Action action, string description, LaunchType launchType = LaunchType.Modal)
-    {
-      IsLaunchedAsDialog = (launchType == LaunchType.Modal);
-      this.myTask = Task.Run(action);
-      this.myDescripton = description ?? "(null description passed)";
-      myTask.ContinueWith(this.UponTaskCompletion);
-      if(IsLaunchedAsDialog)
-      {
-        this.ShowDialog();
-      }
-      else
-      {
-        this.Show();
-        this.Activate();
-      }
+      var task = Task.Run(action);
+      this.myDescription = description ?? "(null description passed)";
+      task.ContinueWith(this.UponTaskCompletion);
+      this.Show();
+      this.Activate();
+      return task;
     }
 
     public Task<T> LaunchAsync<T>(Func<T> func, string description)
     {
-      IsLaunchedAsDialog = false;
-      // this.myTask = Task.Run(func);
-      var t = Task.Run(func);
-      this.myDescripton = description ?? "(null description passed)";
+      var task = Task.Run(func);
+      this.myDescription = description ?? "(null description passed)";
       this.Show();
       this.Activate();
-      t.ContinueWith(this.UponTaskCompletion);
-      return t;
-    }
-
-    public T LaunchModal<T>(Func<T> func, string description)
-    {
-      IsLaunchedAsDialog = true;
-      // this.myTask = Task.Run(func);
-      var t = Task.Run(func);
-      this.myDescripton = description ?? "(null description passed)";
-      t.ContinueWith(this.UponTaskCompletion);
-      this.ShowDialog();
-      return t.Result;
+      task.ContinueWith(this.UponTaskCompletion);
+      return task;
     }
 
     public Progress<Aliquot.Common.ProgressEventArgs> CreateProgressReporter()
