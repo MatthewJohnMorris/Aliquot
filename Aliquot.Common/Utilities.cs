@@ -86,7 +86,7 @@ namespace Aliquot.Common
     /// <param name="func">reading function</param>
     public static void ReadCompressedFile(string path, Action<BinaryReader> func)
     {
-      using (var fileStream = File.Open(path, FileMode.Open, FileAccess.Read))
+      using (var fileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
       {
         using (var decompressedStream = new GZipStream(fileStream, CompressionMode.Decompress))
         {

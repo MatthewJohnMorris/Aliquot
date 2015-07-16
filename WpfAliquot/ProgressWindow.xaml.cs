@@ -77,6 +77,18 @@ namespace WpfAliquot
       }
     }
 
+    public Task<T> LaunchAsync<T>(Func<T> func, string description)
+    {
+      IsLaunchedAsDialog = false;
+      // this.myTask = Task.Run(func);
+      var t = Task.Run(func);
+      this.myDescripton = description ?? "(null description passed)";
+      this.Show();
+      this.Activate();
+      t.ContinueWith(this.UponTaskCompletion);
+      return t;
+    }
+
     public T LaunchModal<T>(Func<T> func, string description)
     {
       IsLaunchedAsDialog = true;

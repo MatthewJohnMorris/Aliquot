@@ -171,10 +171,32 @@ namespace WpfAliquot
         MessageBoxImage.Question));
     }
 
+    async private void ExecReadPrimes()
+    {
+      ProgressWindow w = new ProgressWindow();
+      string primesFile = this.textPrimesFile.Text;
+      var handler = w.CreateProgressReporter();
+      var ct = w.GetCancellationToken();
+      Func<PrimesFromFile> f = () => new PrimesFromFile(primesFile, handler, ct);
+      Task<PrimesFromFile> t = w.LaunchAsync(f, "Read Primes");
+      PrimesFromFile result = await t;
+      if (result == null)
+      {
+        throw new InvalidDataException("No Primes File was opened for " + this.textPrimesFile.Text);
+      }
+      else
+      {
+        MessageBox.Show(result.ToString());
+      }
+    }
+
     private void Try_Button_Click(object sender, RoutedEventArgs e)
     { 
       if(sender == this.buttonReadPrimes)
       {
+        ExecReadPrimes();
+
+#if false
         ProgressWindow w = new ProgressWindow();
         string primesFile = this.textPrimesFile.Text;
         var handler = w.CreateProgressReporter();
@@ -189,6 +211,7 @@ namespace WpfAliquot
         {
           MessageBox.Show(result.ToString());
         }
+#endif
       }
       else if (sender == this.buttonMakePrimes)
       {
