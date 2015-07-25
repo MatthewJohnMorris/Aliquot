@@ -30,21 +30,6 @@ namespace WpfAliquot
       InitializeComponent();
     }
 
-    private void UponTaskCompletion(Task task)
-    {
-      if(task.Exception != null)
-      {
-        var sb = new StringBuilder();
-        sb.AppendLine(task.Exception.Message);
-        foreach(var ex in task.Exception.InnerExceptions)
-        {
-          sb.AppendLine("-" + ex.Message);
-        }
-        MessageBox.Show(sb.ToString(), "Exception Found In Task '" + myDescription + "'", MessageBoxButton.OK, MessageBoxImage.Exclamation);
-      }
-      this.Dispatcher.Invoke(this.Close);
-    }
-
     private void ShowAndActivateWithDescription(string description)
     {
       this.myDescription = description ?? "(null description passed)";
@@ -56,7 +41,6 @@ namespace WpfAliquot
     {
       ShowAndActivateWithDescription(description);
       var task = Task.Run(action);
-      task.ContinueWith(this.UponTaskCompletion);
       return task;
     }
 
@@ -64,7 +48,6 @@ namespace WpfAliquot
     {
       ShowAndActivateWithDescription(description);
       var task = Task.Run(func);
-      task.ContinueWith(this.UponTaskCompletion);
       return task;
     }
 

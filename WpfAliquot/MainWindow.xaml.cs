@@ -164,7 +164,11 @@ namespace WpfAliquot
     }
     private void ShowExceptionDialog(Exception e, string caption)
     {
-      MessageBox.Show(e.Message, "Error: " + caption, MessageBoxButton.OK, MessageBoxImage.Error);
+      var res = MessageBox.Show(e.Message, "Error: " + caption, MessageBoxButton.OK, MessageBoxImage.Error);
+      if(res == MessageBoxResult.No)
+      {
+        Console.Out.WriteLine("ShowExceptionDialog failed on thread " + System.Threading.Thread.CurrentThread.ManagedThreadId);
+      }
     }
     private bool GetUserConfirmationOfAction(string description)
     {
@@ -184,6 +188,7 @@ namespace WpfAliquot
       Func<PrimesFromFile> f = () => new PrimesFromFile(primesFile, handler, ct);
       try
       {
+        Console.Out.WriteLine("ReadPrimesAsync launched on thread " + System.Threading.Thread.CurrentThread.ManagedThreadId);
         PrimesFromFile result = await w.LaunchAsync(f, "Read Primes");
         UpdateAccordingToGeneratedFiles();
         ShowInfoDialog(result.ToString(), "Read Primes");
@@ -192,6 +197,7 @@ namespace WpfAliquot
       {
         ShowExceptionDialog(e, "Read Primes");
       }
+      w.Close();
     }
     async private void MakePrimesAsync()
     {
@@ -210,6 +216,7 @@ namespace WpfAliquot
       {
         ShowExceptionDialog(e, "Make Primes");
       }
+      w.Close();
     }
     async private void MakeAliquotDBAsync()
     {
@@ -229,6 +236,7 @@ namespace WpfAliquot
       {
         ShowExceptionDialog(e, "Make Aliquot DB");
       }
+      w.Close();
     }
 
     private void Try_Button_Click(object sender, RoutedEventArgs e)

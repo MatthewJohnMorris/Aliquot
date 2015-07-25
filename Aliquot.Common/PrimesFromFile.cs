@@ -48,6 +48,10 @@ namespace Aliquot.Common
           // Check for cancellation
           if(myMaybeCancellationToken.HasValue)
           {
+            if(myMaybeCancellationToken.Value.IsCancellationRequested)
+            {
+              Console.Out.WriteLine("Cancel request made at " + DateTime.Now.ToString("hh:mm:ss"));
+            }
             myMaybeCancellationToken.Value.ThrowIfCancellationRequested();
           }
 
