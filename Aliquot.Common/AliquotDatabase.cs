@@ -258,19 +258,31 @@ namespace Aliquot.Common
     {
       string node = link.Current.ToString();
       string factors = link.Factorisation.ToString();
-      string color = CalcColor(link);
-      writer.WriteLine("{0} [shape=record,label=\"<f0>{0}|<f1>{1}\",color={2}];", node, factors, color);
-    }
-    private static string CalcColor(AliquotChainLink s)
-    {
-      if(s.Factorisation.FactorsAndPowers.Count == 1)
+      string driver = link.Factorisation.Driver();
+      string color = CalcColor(link.Current, link.Factorisation);
+      if(driver.Length > 0)
       {
-        if(s.Factorisation.FactorsAndPowers[0].Power == 1)
+        writer.WriteLine("{0} [shape=record,label=\"<f0>{0}|<f1>{1}|<f2>{2}\",color={3}];", node, factors, driver, color);
+      }
+      else
+      {
+        writer.WriteLine("{0} [shape=record,label=\"<f0>{0}|<f1>{1}\",color={2}];", node, factors, color);
+      }
+    }
+    private static string CalcColor(BigInteger current, PrimeFactorisation factorisation)
+    {
+      if(factorisation.FactorsAndPowers.Count == 1)
+      {
+        if(factorisation.FactorsAndPowers[0].Power == 1)
         {
           return "black";
         }
       }
-      if(s.Current % 2 == 0)
+      if(factorisation.Driver().Length > 0)
+      {
+        return "orange";
+      }
+      if(current % 2 == 0)
       {
         return "red";
       }

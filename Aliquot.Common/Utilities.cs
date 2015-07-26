@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Diagnostics;
+using System.Numerics;
 
 namespace Aliquot.Common
 {
@@ -113,6 +115,13 @@ namespace Aliquot.Common
           func(reader);
         }
       }
+    }
+
+    public static List<BigInteger> PerfectNumbers()
+    {
+      var ret = new List<BigInteger>() {
+ 	      6, 28, 496, 8128, 33550336, 8589869056, 137438691328, 2305843008139952128 };
+      return ret;
     }
 
   }

@@ -140,8 +140,13 @@ namespace Aliquot.Common
     /// <returns>s(n)</returns>
     public BigInteger SumAllProperDivisors()
     {
+      BigInteger n;
+      return SumAllProperDivisors(out n);
+    }
+    private BigInteger SumAllProperDivisors(out BigInteger n)
+    {
       BigInteger result = 1;
-      BigInteger n = 1;
+      n = 1;
 
       var factorsAndPowers = myFactorsAndPowers;
       int numFactors = factorsAndPowers.Count;
@@ -168,6 +173,68 @@ namespace Aliquot.Common
       result -= n;
 
       return result;
+    }
+
+    /// <summary>
+    /// Get description of any driver
+    /// </summary>
+    /// <returns>description (or blank if no driver)</returns>
+    public string Driver()
+    {
+      if(
+        FactorPower(31) >= 1 &&
+        FactorPower(11) >= 1 &&
+        FactorPower(3) >= 1 &&
+        FactorPower(2) >= 9)
+      {
+        return "2^9.3.11.31";
+      }
+      if (
+        FactorPower(7) >= 1 &&
+        FactorPower(3) >= 1 &&
+        FactorPower(2) >= 5)
+      {
+        return "2^5.3.7";
+      }
+      if (
+        FactorPower(5) >= 1 &&
+        FactorPower(3) >= 1 &&
+        FactorPower(2) >= 3)
+      {
+        return "2^3.3.5";
+      }
+      if (
+        FactorPower(3) >= 1 &&
+        FactorPower(2) >= 3)
+      {
+        return "2^3.3";
+      }
+
+      BigInteger n;
+      BigInteger s = SumAllProperDivisors(out n);
+      var perfects = Utilities.PerfectNumbers();
+      perfects.Reverse();
+      foreach(var perfect in perfects)
+      {
+        if(n % perfect == 0)
+        {
+          return "P:" + perfect;
+        }
+      }
+
+      return "";
+    }
+
+    public int FactorPower(BigInteger factor)
+    {
+      foreach(var fp in FactorsAndPowers)
+      {
+        if(fp.Factor == factor)
+        {
+          return fp.Power;
+        }
+      }
+      return 0;
     }
 
     /// <summary>
