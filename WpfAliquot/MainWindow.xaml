@@ -1,7 +1,7 @@
 ﻿<Window x:Class="WpfAliquot.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Aliquot Control Centre" Height="460.728" Width="525">
+        Title="Aliquot Control Centre" Height="493.728" Width="525">
   <Grid>
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="424*"/>
@@ -23,7 +23,7 @@
     <Label Content="Dot.Exe File:" HorizontalAlignment="Left" Height="23" Margin="43,172,0,0" VerticalAlignment="Top" Width="99" HorizontalContentAlignment="Right"/>
     <Button x:Name="buttonReadAliquotDB" Content="Read Aliquot DB" HorizontalAlignment="Left" Margin="339,132,0,0" VerticalAlignment="Top" Width="107" Click="Button_Click" RenderTransformOrigin="0.349,2.181" Height="22" Grid.ColumnSpan="2"/>
     <Button x:Name="buttonReadPrimes" Content="Read Primes" HorizontalAlignment="Left" Margin="339,59,0,0" VerticalAlignment="Top" Width="75" Click="Button_Click" Height="22"/>
-    <Button x:Name="buttonFindGvDotExe" Content="Find GraphViz Dot.Exe" HorizontalAlignment="Left" Margin="160,200,0,0" VerticalAlignment="Top" Width="141" Click="Button_Click" RenderTransformOrigin="0.349,2.181" Height="22"/>
+    <Button x:Name="buttonFindGvDotExe" Content="Find GraphViz Dot.Exe" HorizontalAlignment="Left" Margin="10,200,0,0" VerticalAlignment="Top" Width="141" Click="Button_Click" RenderTransformOrigin="0.349,2.181" Height="22"/>
     <TextBox x:Name="textTreeRoot" HorizontalAlignment="Left" Height="23" Margin="160,245,0,0" TextWrapping="Wrap" Text="3" VerticalAlignment="Top" Width="141"/>
     <Button x:Name="buttonMakeTree" Content="Make Aliquot Tree" HorizontalAlignment="Left" Margin="339,245,0,0" VerticalAlignment="Top" Width="107" Click="Button_Click" Height="22" Grid.ColumnSpan="2"/>
     <TextBox x:Name="textTreeLimit" HorizontalAlignment="Left" Height="23" Margin="160,273,0,0" TextWrapping="Wrap" Text="1000" VerticalAlignment="Top" Width="141"/>
@@ -43,7 +43,11 @@
         </MenuItem>
       </Menu>
     </DockPanel>
-    <Button x:Name="buttonOpenExplorer" Content="Open Explorer" HorizontalAlignment="Left" Margin="339,273,0,0" VerticalAlignment="Top" Width="107" Click="Button_Click" Height="22" Grid.ColumnSpan="2"/>
+    <Button x:Name="buttonOpenExplorer" Content="Open Explorer" HorizontalAlignment="Left" Margin="160,200,0,0" VerticalAlignment="Top" Width="107" Click="Button_Click" Height="22"/>
+    <CheckBox x:Name="checkboxOpenNewTrees" Content="Open New Trees" HorizontalAlignment="Left" Margin="281,203,0,0" VerticalAlignment="Top" Height="20" Width="107"/>
+    <TextBox x:Name="textChainStart" HorizontalAlignment="Left" Height="23" Margin="160,411,0,0" TextWrapping="Wrap" Text="3" VerticalAlignment="Top" Width="141"/>
+    <Button x:Name="buttonMakeChain" Content="Make Aliquot Chain" HorizontalAlignment="Left" Margin="339,411,0,0" VerticalAlignment="Top" Width="107" Click="Button_Click" Height="22" Grid.ColumnSpan="2"/>
+    <Label Content="Chain Start:" HorizontalAlignment="Left" Height="23" Margin="43,411,0,0" VerticalAlignment="Top" Width="99" HorizontalContentAlignment="Right"/>
 
   </Grid>
 </Window>

@@ -214,9 +214,8 @@ namespace Aliquot.Common
       writer.WriteLine("digraph G {");
       foreach(var node in allNodesInTree)
       {
-        string factors = (Links.ContainsKey(node)) ? Links[node].Factorisation.ToString() : "";
-        string color = CalcColor(Links[node]);
-        writer.WriteLine("{0} [shape=record,label=\"<f0>{0}|<f1>{1}\",color={2}];", node, factors, color);
+        var link = Links[node];
+        WriteBox(writer, link);
       }
       var nodesWritten = new HashSet<BigInteger>();
       OutputLinks(reverseLinks, treeBase, writer, nodesWritten);
@@ -224,7 +223,45 @@ namespace Aliquot.Common
 
     }
 
-    private string CalcColor(AliquotChainLink s)
+    public void WriteChain(BigInteger chainStart, TextWriter writer)
+    {
+      var chainLinks = new List<AliquotChainLink>();
+      var chainSet = new HashSet<BigInteger>();
+
+      var current = chainStart;
+      while(Links.ContainsKey(current) && ! chainSet.Contains(current))
+      {
+        var link = Links[current];
+        chainLinks.Add(link);
+        chainSet.Add(current);
+        current = link.Successor;
+      }
+
+      // dot -Tpdf file.gv -o file.pdf
+
+      writer.WriteLine("digraph G {");
+      foreach (var link in chainLinks)
+      {
+        WriteBox(writer, link);
+      }
+      foreach (var link in chainLinks)
+      {
+        WriteArrow(writer, link.Current, link.Successor);
+      }
+      writer.WriteLine("}");
+
+    }
+
+    private static void WriteBox(
+      TextWriter writer,
+      AliquotChainLink link)
+    {
+      string node = link.Current.ToString();
+      string factors = link.Factorisation.ToString();
+      string color = CalcColor(link);
+      writer.WriteLine("{0} [shape=record,label=\"<f0>{0}|<f1>{1}\",color={2}];", node, factors, color);
+    }
+    private static string CalcColor(AliquotChainLink s)
     {
       if(s.Factorisation.FactorsAndPowers.Count == 1)
       {
@@ -238,6 +275,18 @@ namespace Aliquot.Common
         return "red";
       }
       return "green";
+    }
+    private static void WriteArrow(
+      TextWriter writer,
+      BigInteger current,
+      BigInteger successor)
+    {
+      string attributes = "";
+      if (successor > current)
+      {
+        attributes = " [arrowhead=empty]";
+      }
+      writer.WriteLine("{0}->{1}" + attributes, current, successor);
     }
 
     private void GatherNodes(
@@ -266,12 +315,7 @@ namespace Aliquot.Common
       {
         if(! nodesWritten.Contains(predecessor))
         {
-          string attributes = "";
-          if (current > predecessor)
-          {
-            attributes = " [arrowhead=empty]";
-          }
-          writer.WriteLine("{0}->{1}" + attributes, predecessor, current);
+          WriteArrow(writer, predecessor, current);
           nodesWritten.Add(predecessor);
           OutputLinks(links, predecessor, writer, nodesWritten);
         }

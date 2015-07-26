@@ -142,7 +142,7 @@ namespace WpfAliquot
       adb.SaveAs(adbFile);
     }
 
-    static void MakeTreeGraph(
+    void MakeTreeGraph(
       string sTreeRoot,
       string sTreeLimit,
       string adbName,
@@ -154,6 +154,20 @@ namespace WpfAliquot
       using (var writer = new StreamWriter(gvOut + ".gv"))
       {
         db.WriteTree(treeRoot, treeLimit, writer);
+      }
+      GraphViz.RunDotExe(gvOut, "svg");
+    }
+
+    void MakeChainGraph(
+      string sChainStart,
+      string adbName,
+      string gvOut)
+    {
+      BigInteger chainStart = BigInteger.Parse(sChainStart);
+      var db = AliquotDatabase.Open(adbName);
+      using (var writer = new StreamWriter(gvOut + ".gv"))
+      {
+        db.WriteChain(chainStart, writer);
       }
       GraphViz.RunDotExe(gvOut, "svg");
     }
@@ -296,7 +310,34 @@ namespace WpfAliquot
           sTreeLimit,
           adbName,
           gvOut);
-        ShowInfoDialog("File written to " + System.IO.Path.GetFullPath(gvOut + ".svg"), "Aliquot Tree Creation");
+        var fullPath = System.IO.Path.GetFullPath(gvOut + ".svg");
+        if (checkboxOpenNewTrees.IsChecked ?? false)
+        {
+          Process.Start(fullPath);
+        }
+        else
+        {
+          ShowInfoDialog("File written to " + fullPath, "Aliquot Tree Creation");
+        }
+      }
+      else if (sender == this.buttonMakeChain)
+      {
+        string adbName = this.textAdbFile.Text;
+        string sChainStart = this.textChainStart.Text;
+        string gvOut = this.textTreeFile.Text;
+        MakeChainGraph(
+          sChainStart,
+          adbName,
+          gvOut);
+        var fullPath = System.IO.Path.GetFullPath(gvOut + ".svg");
+        if (checkboxOpenNewTrees.IsChecked ?? false)
+        {
+          Process.Start(fullPath);
+        }
+        else
+        {
+          ShowInfoDialog("File written to " + fullPath, "Aliquot Chain Creation");
+        }
       }
       else if (sender == this.buttonExportAdb)
       {
