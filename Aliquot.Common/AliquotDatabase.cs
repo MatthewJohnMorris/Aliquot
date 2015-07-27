@@ -57,8 +57,7 @@ namespace Aliquot.Common
       {
         // Build the chain onwards from this number
         BigInteger n = i;
-        int chainLength = 0;
-        while (n > 1 && n < upperLimit && chainLength < 300)
+        while (n > 1 && n < upperLimit)
         {
           // Get the new link
           var s = new AliquotChainLink(p, n);
@@ -72,7 +71,6 @@ namespace Aliquot.Common
             // It's a new link - add it to the database
             links[n] = s;
           }
-          chainLength++;
           // Go to next element in chain
           n = s.Successor;
         }
