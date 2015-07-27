@@ -195,15 +195,15 @@ namespace WpfAliquot
 
     async private void ReadPrimesAsync()
     {
-      ProgressWindow w = new ProgressWindow();
+      ProgressWindow w = ProgressWindow.CreateWithDescription("Read Primes");
       string primesFile = this.textPrimesFile.Text;
-      var handler = w.CreateProgressReporter();
-      var ct = w.GetCancellationToken();
+      var handler = w.ProgressReporter;
+      var ct = w.CancellationToken;
       Func<PrimesFromFile> f = () => new PrimesFromFile(primesFile, handler, ct);
       try
       {
         Console.Out.WriteLine("ReadPrimesAsync launched on thread " + System.Threading.Thread.CurrentThread.ManagedThreadId);
-        PrimesFromFile result = await w.LaunchAsync(f, "Read Primes");
+        PrimesFromFile result = await Task.Run(f);
         UpdateAccordingToGeneratedFiles();
         ShowInfoDialog(result.ToString(), "Read Primes");
       }
@@ -215,15 +215,15 @@ namespace WpfAliquot
     }
     async private void MakePrimesAsync()
     {
-      ProgressWindow w = new ProgressWindow();
+      ProgressWindow w = ProgressWindow.CreateWithDescription("Make Primes");
       string primesFile = this.textPrimesFile.Text;
       string primesLimit = this.textPrimesLimit.Text;
-      var handler = w.CreateProgressReporter();
-      var ct = w.GetCancellationToken();
+      var handler = w.ProgressReporter;
+      var ct = w.CancellationToken;
       Action a = () => MakePrimesFile(primesFile, primesLimit, handler, ct);
       try
       {
-        await w.LaunchAsync(a, "Make Primes");
+        await Task.Run(a);
         UpdateAccordingToGeneratedFiles();
       }
       catch(Exception e)
@@ -234,16 +234,16 @@ namespace WpfAliquot
     }
     async private void MakeAliquotDBAsync()
     {
-      ProgressWindow w = new ProgressWindow();
+      ProgressWindow w = ProgressWindow.CreateWithDescription("Make Aliquot DB");
       string primesFile = this.textPrimesFile.Text;
       string adbLimit = this.textAdbLimit.Text;
       string adbFile = this.textAdbFile.Text;
-      var handler = w.CreateProgressReporter();
-      var ct = w.GetCancellationToken();
+      var handler = w.ProgressReporter;
+      var ct = w.CancellationToken;
       Action a = () => MakeAliquotDb(primesFile, adbLimit, adbFile, handler, ct);
       try
       {
-        await w.LaunchAsync(a, "Make Aliquot DB");
+        await Task.Run(a);
         UpdateAccordingToGeneratedFiles();
       }
       catch (Exception e)

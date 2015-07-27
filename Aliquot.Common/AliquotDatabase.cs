@@ -300,7 +300,7 @@ namespace Aliquot.Common
       string attributes = "";
       if (successor > current)
       {
-        attributes = " [arrowhead=empty]";
+        attributes = " [arrowhead=empty,color=gray]";
       }
       writer.WriteLine("{0}->{1}" + attributes, current, successor);
     }

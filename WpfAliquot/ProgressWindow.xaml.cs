@@ -20,52 +20,37 @@ namespace WpfAliquot
   /// </summary>
   public partial class ProgressWindow : Window
   {
-    private string myDescription = null;
-    private CancellationTokenSource myCancellationTokenSource;
+    public string Description { get; private set; }
+
+    public CancellationTokenSource myCancellationTokenSource;
+    public CancellationToken CancellationToken { get { return myCancellationTokenSource.Token; } }
+
+    public Progress<Aliquot.Common.ProgressEventArgs> ProgressReporter { get; private set; }
 
     public ProgressWindow()
     {
+      Description = "(not set)";
       myCancellationTokenSource = new CancellationTokenSource();
+      ProgressReporter = new Progress<Aliquot.Common.ProgressEventArgs>(this.ReportProgress);
 
       InitializeComponent();
     }
 
-    private void ShowAndActivateWithDescription(string description)
+    public static ProgressWindow CreateWithDescription(string description)
     {
-      this.myDescription = description ?? "(null description passed)";
-      this.Show();
-      this.Activate();
+      ProgressWindow ret = new ProgressWindow();
+      ret.Description = description ?? "(null description passed)";
+      ret.Show();
+      ret.Activate();
+      return ret;
     }
 
-    public Task LaunchAsync(Action action, string description)
-    {
-      ShowAndActivateWithDescription(description);
-      var task = Task.Run(action);
-      return task;
-    }
-
-    public Task<T> LaunchAsync<T>(Func<T> func, string description)
-    {
-      ShowAndActivateWithDescription(description);
-      var task = Task.Run(func);
-      return task;
-    }
-
-    public Progress<Aliquot.Common.ProgressEventArgs> CreateProgressReporter()
-    {
-      return new Progress<Aliquot.Common.ProgressEventArgs>(this.ReportProgress);
-    }
     private void ReportProgress(Aliquot.Common.ProgressEventArgs args)
     {
       this.progressbar.Value = args.Percent;
       this.textboxDescription.Text = args.Message;
     }
   
-    public CancellationToken GetCancellationToken()
-    {
-      return myCancellationTokenSource.Token;
-    }
-
     private void buttonCancel_Click(object sender, RoutedEventArgs e)
     {
       myCancellationTokenSource.Cancel();
