@@ -45,9 +45,13 @@ namespace Aliquot.Common
       DateTime dtStart = DateTime.UtcNow;
 
       int progress = 0;
+
+      // Set up a parallel run across the collection
       var range = Enumerable.Range(1, dbLimit);
       var parOpts = new ParallelOptions();
       parOpts.CancellationToken = maybeCancellationToken.Value;
+      // We *could* set this, but really .NET should be able to figure it out!
+      // parOpts.MaxDegreeOfParallelism = System.Environment.ProcessorCount;
       Parallel.ForEach(range,
         (i) =>
       {
@@ -58,8 +62,9 @@ namespace Aliquot.Common
         {
           // Get the new link
           var s = new AliquotChainLink(p, n);
-          // Add to set of links unless it takes us above the limit
+          // Abandon if we would go above the limit
           if (s.Successor > upperLimit) { break; }
+          // Synchronize on the links collection since this is in parallel
           lock(links)
           {
             // We exit if we are joining an existing chain
@@ -81,9 +86,7 @@ namespace Aliquot.Common
             maybeCancellationToken.Value.ThrowIfCancellationRequested();
           }
 
-          DateTime dtNow = DateTime.UtcNow;
-          var diff = dtNow - dtStart;
-          double s = diff.TotalSeconds;
+          double s = (DateTime.UtcNow - dtStart).TotalSeconds;
           double expected = s * (dbLimit - i) / i;
           ProgressEventArgs.RaiseEvent(progressIndicator, newProgress, string.Format("ADB: i {0} Time Used (min) {1:N} Estimated time Left (min) {2:N}", i, s/60.0, expected/60.0));
           progress = newProgress;
