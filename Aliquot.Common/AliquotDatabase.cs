@@ -278,7 +278,11 @@ namespace Aliquot.Common
           return "black";
         }
       }
-      if(factorisation.Driver().Length > 0)
+      if (factorisation.IsSquare)
+      {
+        return "blue";
+      }
+      if (factorisation.Driver().Length > 0)
       {
         return "orange";
       }

@@ -175,6 +175,21 @@ namespace Aliquot.Common
       return result;
     }
 
+    public bool IsSquare
+    {
+      get
+      {
+        foreach(var fp in myFactorsAndPowers)
+        {
+          if(fp.Power % 2 == 1)
+          {
+            return false;
+          }
+        }
+        return true;
+      }
+    }
+
     /// <summary>
     /// Get description of any driver
     /// </summary>
