@@ -254,6 +254,33 @@ namespace WpfAliquot
       }
       w.Close();
     }
+    async private void ReadAliquotDbAsync()
+    {
+      ProgressWindow w = ProgressWindow.CreateWithDescription("Read Aliquot DB");
+
+      string adbFile = this.textAdbFile.Text;
+
+      var handler = w.ProgressReporter;
+      var ct = w.CancellationToken;
+      try
+      {
+        Func<AliquotDatabase> f = () => AliquotDatabase.Open(adbFile, handler, ct);
+        AliquotDatabase db = await Task.Run(f);
+        UpdateAccordingToGeneratedFiles();
+        var sb = new StringBuilder();
+        foreach (var key in db.CreationProperties.Keys)
+        {
+          sb.AppendLine(string.Format("{0}={1}", key, db.CreationProperties[key]));
+        }
+        ShowInfoDialog(sb.ToString(), "Aliquot DB " + this.textAdbFile.Text);
+      }
+      catch (Exception e)
+      {
+        ShowExceptionDialog(e, "Read Aliquot DB");
+      }
+      w.Close();
+
+    }
     async private void MakeAliquotDBAsync()
     {
       ProgressWindow w = ProgressWindow.CreateWithDescription("Make Aliquot DB");
@@ -294,13 +321,7 @@ namespace WpfAliquot
       }
       else if (sender == this.buttonReadAliquotDB)
       {
-        var db = AliquotDatabase.Open(this.textAdbFile.Text);
-        var sb = new StringBuilder();
-        foreach(var key in db.CreationProperties.Keys)
-        {
-          sb.AppendLine(string.Format("{0}={1}", key, db.CreationProperties[key]));
-        }
-        ShowInfoDialog(sb.ToString(), "Aliquot DB " + this.textAdbFile.Text);
+        ReadAliquotDbAsync();
       }
       else if(sender == this.buttonMakeAliquotDB)
       {

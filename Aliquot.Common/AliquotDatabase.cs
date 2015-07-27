@@ -14,6 +14,8 @@ namespace Aliquot.Common
   {
     public Dictionary<BigInteger, AliquotChainLink> Links { get; private set; }
     public Dictionary<string, string> CreationProperties { get; private set; }
+    private IProgress<ProgressEventArgs> myProgressIndicator;
+    private CancellationToken? myMaybeCancellationToken;
 
     private AliquotDatabase()
     {
@@ -152,9 +154,16 @@ namespace Aliquot.Common
       }
     }
 
-    public static AliquotDatabase Open(string path)
+    public static AliquotDatabase Open(
+      string path,
+      Progress<ProgressEventArgs> progressIndicator = null,
+      CancellationToken? maybeCancellationToken = null)
     {
       AliquotDatabase ret = new AliquotDatabase();
+
+      ret.myProgressIndicator = progressIndicator;
+      ret.myMaybeCancellationToken = maybeCancellationToken;
+      
       Utilities.ReadCompressedFile(path, ret.Reader);
       return ret;
     }
@@ -183,10 +192,36 @@ namespace Aliquot.Common
       {
         throw new InvalidDataException("ADB file did not have 'Count' property");
       }
-      UInt64 count = UInt64.Parse(CreationProperties["Count"]);
+      UInt64 n = UInt64.Parse(CreationProperties["Count"]);
+      // read links
+      UInt64 n100 = n / 100;
+      UInt64 c = 0;
       DateTime dtStart = DateTime.UtcNow;
-      for(UInt64 i = 0; i < count; ++i)
+      for(UInt64 i = 0; i < n; ++i)
       {
+        if (c++ == n100)
+        {
+          c = 0;
+
+          // Check for cancellation
+          if (myMaybeCancellationToken.HasValue)
+          {
+            if (myMaybeCancellationToken.Value.IsCancellationRequested)
+            {
+              Console.Out.WriteLine("Cancel request made at " + DateTime.Now.ToString("hh:mm:ss"));
+            }
+            myMaybeCancellationToken.Value.ThrowIfCancellationRequested();
+          }
+
+          // Raise progress message
+          string message = string.Format("AliquotDB: Read {0:N0} of {1:N0}", i, n);
+          BigInteger b_i = i;
+          BigInteger b_n = n;
+          BigInteger b_percent = b_i * 100 / b_n;
+          int percent = int.Parse(b_percent.ToString());
+          ProgressEventArgs.RaiseEvent(myProgressIndicator, percent, message);
+        }
+
         UInt64 current = reader.ReadUInt64();
         UInt64 successor = reader.ReadUInt64();
         var pf = PrimeFactorisation.Create(reader);

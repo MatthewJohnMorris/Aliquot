@@ -99,12 +99,13 @@ namespace Aliquot.Common
 
       // Start the process with the info we specified.
       // Call WaitForExit and then the using statement will close.
-      int processTimeoutInMilliseconds = 5000;
+      int processTimeoutInMilliseconds = 30000;
       using (Process exeProcess = Process.Start(startInfo))
       {
         exeProcess.WaitForExit(processTimeoutInMilliseconds);
         if (!exeProcess.HasExited)
         {
+          exeProcess.Kill(); // kill as we are not going to try any longer!
           throw new TimeoutException(string.Format("Has not exited after timeout of {0} ms: [{1} {2}]", processTimeoutInMilliseconds, gvdotLocation, arguments));
         }
         if(exeProcess.ExitCode != 0)
