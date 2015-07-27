@@ -6,6 +6,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Numerics;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Aliquot.Common
 {
@@ -44,7 +45,11 @@ namespace Aliquot.Common
       DateTime dtStart = DateTime.UtcNow;
 
       int progress = 0;
-      for (int i = 1; i <= dbLimit; ++i)
+      var range = Enumerable.Range(1, dbLimit);
+      var parOpts = new ParallelOptions();
+      parOpts.CancellationToken = maybeCancellationToken.Value;
+      Parallel.ForEach(range,
+        (i) =>
       {
         // Build the chain onwards from this number
         BigInteger n = i;
@@ -55,10 +60,13 @@ namespace Aliquot.Common
           var s = new AliquotChainLink(p, n);
           // Add to set of links unless it takes us above the limit
           if (s.Successor > upperLimit) { break; }
-          // We exit if we are joining an existing chain
-          if (links.ContainsKey(n)) { break; }
-          // It's a new link - add it to the database
-          links[n] = s;
+          lock(links)
+          {
+            // We exit if we are joining an existing chain
+            if (links.ContainsKey(n)) { break; }
+            // It's a new link - add it to the database
+            links[n] = s;
+          }
           chainLength++;
           // Go to next element in chain
           n = s.Successor;
@@ -81,6 +89,7 @@ namespace Aliquot.Common
           progress = newProgress;
         }
       }
+      );
 
       creationProperties["Create.FinishTimeUtc"] = DateTime.UtcNow.ToString();
       creationProperties["Create.Seconds"] = (DateTime.UtcNow - dtStart).TotalSeconds.ToString("N2");

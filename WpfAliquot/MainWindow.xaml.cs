@@ -178,7 +178,29 @@ namespace WpfAliquot
     }
     private void ShowExceptionDialog(Exception e, string caption)
     {
-      var res = MessageBox.Show(e.Message, "Error: " + caption, MessageBoxButton.OK, MessageBoxImage.Error);
+      var sb = new StringBuilder();
+      if(e is AggregateException)
+      {
+        AggregateException ae = e as AggregateException;
+        sb.Append(string.Format("Aggregate Exception with {0} member(s)", ae.InnerExceptions.Count));
+        var messages = new HashSet<string>();
+        foreach (var ie in (e as AggregateException).InnerExceptions)
+        {
+          if(! messages.Contains(ie.Message))
+          {
+            messages.Add(ie.Message);
+          }
+        }
+        foreach(var message in messages)
+        {
+          sb.Append("\n* " + message);
+        }
+      }
+      else
+      {
+        sb.Append(e.Message);
+      }
+      var res = MessageBox.Show(sb.ToString(), "Error: " + caption, MessageBoxButton.OK, MessageBoxImage.Error);
       if(res == MessageBoxResult.No)
       {
         Console.Out.WriteLine("ShowExceptionDialog failed on thread " + System.Threading.Thread.CurrentThread.ManagedThreadId);
