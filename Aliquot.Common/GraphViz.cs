@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Aliquot.Common
@@ -85,7 +86,11 @@ namespace Aliquot.Common
     /// </summary>
     /// <param name="gvOut">Location of input and output (without extension - we assume the input extension is .gv)</param>
     /// <param name="gvFileType">Type of image (svg is often a good choice)</param>
-    public static void RunDotExe(string gvOut, string gvFileType)
+    public static void RunDotExe(
+      string gvOut,
+      string gvFileType,
+      Progress<ProgressEventArgs> progressIndicator = null,
+      CancellationToken? maybeCancellationToken = null)
     {
       var gvdotLocation = GetDotExeLocation();
       string arguments = "-T" + gvFileType + " " + gvOut + ".gv -o " + gvOut + "." + gvFileType;
@@ -99,14 +104,33 @@ namespace Aliquot.Common
 
       // Start the process with the info we specified.
       // Call WaitForExit and then the using statement will close.
-      int processTimeoutInMilliseconds = 30000;
+      int processTimeoutInMilliseconds = 1000;
+      int numTries = 30;
       using (Process exeProcess = Process.Start(startInfo))
       {
-        exeProcess.WaitForExit(processTimeoutInMilliseconds);
+        for (int i = 0; i < numTries; ++i)
+        {
+          exeProcess.WaitForExit(processTimeoutInMilliseconds);
+          if(exeProcess.HasExited)
+          {
+            break;
+          }
+          if(maybeCancellationToken.HasValue)
+          {
+            if(maybeCancellationToken.Value.IsCancellationRequested)
+            {
+              exeProcess.Kill(); // don't bother to keep trying, we're about to throw
+            }
+            maybeCancellationToken.Value.ThrowIfCancellationRequested();
+          }
+          int percent = i * 100 / numTries;
+          var message = string.Format("Waiting for dot.exe: {0} / {1} sec", i, numTries);
+          ProgressEventArgs.RaiseEvent(progressIndicator, percent, message);
+        }
         if (!exeProcess.HasExited)
         {
           exeProcess.Kill(); // kill as we are not going to try any longer!
-          throw new TimeoutException(string.Format("Has not exited after timeout of {0} ms: [{1} {2}]", processTimeoutInMilliseconds, gvdotLocation, arguments));
+          throw new TimeoutException(string.Format("Has not exited after timeout of {0} sec: [{1} {2}]", numTries, gvdotLocation, arguments));
         }
         if(exeProcess.ExitCode != 0)
         {

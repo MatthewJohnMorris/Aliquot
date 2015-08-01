@@ -146,25 +146,29 @@ namespace WpfAliquot
       string sTreeRoot,
       string sTreeLimit,
       string adbName,
-      string gvOut)
+      string gvOut,
+      Progress<ProgressEventArgs> handler,
+      CancellationToken cancellationToken)
     {
       BigInteger treeRoot = BigInteger.Parse(sTreeRoot);
       BigInteger treeLimit = BigInteger.Parse(sTreeLimit);
-      var db = AliquotDatabase.Open(adbName);
+      var db = AliquotDatabase.Open(adbName, handler, cancellationToken);
       using (var writer = new StreamWriter(gvOut + ".gv"))
       {
         db.WriteTree(treeRoot, treeLimit, writer);
       }
-      GraphViz.RunDotExe(gvOut, "svg");
+      GraphViz.RunDotExe(gvOut, "svg", handler, cancellationToken);
     }
 
     void MakeChainGraph(
       string sChainStart,
       string adbName,
-      string gvOut)
+      string gvOut,
+      Progress<ProgressEventArgs> handler,
+      CancellationToken cancellationToken)
     {
       BigInteger chainStart = BigInteger.Parse(sChainStart);
-      var db = AliquotDatabase.Open(adbName);
+      var db = AliquotDatabase.Open(adbName, handler, cancellationToken);
       using (var writer = new StreamWriter(gvOut + ".gv"))
       {
         db.WriteChain(chainStart, writer);
@@ -281,7 +285,7 @@ namespace WpfAliquot
       w.Close();
 
     }
-    async private void MakeAliquotDBAsync()
+    async private void MakeAliquotDbAsync()
     {
       ProgressWindow w = ProgressWindow.CreateWithDescription("Make Aliquot DB");
       string primesFile = this.textPrimesFile.Text;
@@ -298,6 +302,110 @@ namespace WpfAliquot
       catch (Exception e)
       {
         ShowExceptionDialog(e, "Make Aliquot DB");
+      }
+      w.Close();
+    }
+    async private void MakeTreeGraphAsync()
+    {
+      ProgressWindow w = ProgressWindow.CreateWithDescription("Make Tree");
+      string adbName = this.textAdbFile.Text;
+      string sTreeRoot = this.textTreeRoot.Text;
+      string sTreeLimit = this.textTreeLimit.Text;
+      string gvOut = this.textTreeFile.Text;
+      var handler = w.ProgressReporter;
+      var ct = w.CancellationToken;
+      Action a = () => 
+        MakeTreeGraph(
+          sTreeRoot,
+          sTreeLimit,
+          adbName,
+          gvOut,
+          handler, ct);
+      try
+      {
+        await Task.Run(a);
+        var fullPath = System.IO.Path.GetFullPath(gvOut + ".svg");
+        if (checkboxOpenNewTrees.IsChecked ?? false)
+        {
+          Process.Start(fullPath);
+        }
+        else
+        {
+          ShowInfoDialog("File written to " + fullPath, "Aliquot Tree Creation");
+        }
+      }
+      catch (Exception e)
+      {
+        ShowExceptionDialog(e, "Make Tree");
+      }
+      w.Close();
+    }
+    async private void MakeChainGraphAsync()
+    {
+      ProgressWindow w = ProgressWindow.CreateWithDescription("Make Tree");
+      string adbName = this.textAdbFile.Text;
+      string sChainStart = this.textChainStart.Text;
+      string gvOut = this.textTreeFile.Text;
+      var handler = w.ProgressReporter;
+      var ct = w.CancellationToken;
+      Action a = () =>
+        MakeChainGraph(
+          sChainStart,
+          adbName,
+          gvOut,
+          handler,
+          ct);
+      try
+      {
+        await Task.Run(a);
+        var fullPath = System.IO.Path.GetFullPath(gvOut + ".svg");
+        if (checkboxOpenNewTrees.IsChecked ?? false)
+        {
+          Process.Start(fullPath);
+        }
+        else
+        {
+          ShowInfoDialog("File written to " + fullPath, "Aliquot Chain Creation");
+        }
+      }
+      catch (Exception e)
+      {
+        ShowExceptionDialog(e, "Make Chain");
+      }
+      w.Close();
+    }
+    async private void ExportAliquotDbAsync()
+    {
+      ProgressWindow w = ProgressWindow.CreateWithDescription("Make Tree");
+      string adbName = this.textAdbFile.Text;
+      string sExportLimit = this.textExportLimit.Text;
+      string exportFile = this.textExportFile.Text;
+      var handler = w.ProgressReporter;
+      var ct = w.CancellationToken;
+      Action a = () =>
+        {
+          var db = AliquotDatabase.Open(adbName, handler, ct);
+          BigInteger exportLimit = BigInteger.Parse(sExportLimit);
+          AliquotDatabase.ExportFormat exportFormat = AliquotDatabase.ExportFormat.Tsv;
+          if (exportFile.EndsWith("csv", StringComparison.OrdinalIgnoreCase))
+          {
+            exportFormat = AliquotDatabase.ExportFormat.Csv;
+          }
+          using (var writer = new StreamWriter(exportFile))
+          {
+            db.ExportTable(writer, exportLimit, exportFormat);
+          }
+        };
+      try
+      {
+        await Task.Run(a);
+        ShowInfoDialog(
+          string.Format("File up to {0} written to {1}", sExportLimit, System.IO.Path.GetFullPath(exportFile)),
+          "Aliquot Db Table Export");
+      }
+      catch (Exception e)
+      {
+        ShowExceptionDialog(e, "Export Aliquot Db");
       }
       w.Close();
     }
@@ -332,7 +440,7 @@ namespace WpfAliquot
         {
           return;
         }
-        MakeAliquotDBAsync();
+        MakeAliquotDbAsync();
       }
       else if (sender == this.buttonFindGvDotExe)
       {
@@ -344,63 +452,15 @@ namespace WpfAliquot
       }
       else if (sender == this.buttonMakeTree)
       {
-        string adbName = this.textAdbFile.Text;
-        string sTreeRoot = this.textTreeRoot.Text;
-        string sTreeLimit = this.textTreeLimit.Text;
-        string gvOut = this.textTreeFile.Text;
-        MakeTreeGraph(
-          sTreeRoot,
-          sTreeLimit,
-          adbName,
-          gvOut);
-        var fullPath = System.IO.Path.GetFullPath(gvOut + ".svg");
-        if (checkboxOpenNewTrees.IsChecked ?? false)
-        {
-          Process.Start(fullPath);
-        }
-        else
-        {
-          ShowInfoDialog("File written to " + fullPath, "Aliquot Tree Creation");
-        }
+        MakeTreeGraphAsync();
       }
       else if (sender == this.buttonMakeChain)
       {
-        string adbName = this.textAdbFile.Text;
-        string sChainStart = this.textChainStart.Text;
-        string gvOut = this.textTreeFile.Text;
-        MakeChainGraph(
-          sChainStart,
-          adbName,
-          gvOut);
-        var fullPath = System.IO.Path.GetFullPath(gvOut + ".svg");
-        if (checkboxOpenNewTrees.IsChecked ?? false)
-        {
-          Process.Start(fullPath);
-        }
-        else
-        {
-          ShowInfoDialog("File written to " + fullPath, "Aliquot Chain Creation");
-        }
+        MakeChainGraphAsync();
       }
       else if (sender == this.buttonExportAdb)
       {
-        string adbName = this.textAdbFile.Text;
-        var db = AliquotDatabase.Open(adbName);
-        string sExportLimit = this.textExportLimit.Text;
-        BigInteger exportLimit = BigInteger.Parse(sExportLimit);
-        string exportFile = this.textExportFile.Text;
-        AliquotDatabase.ExportFormat exportFormat = AliquotDatabase.ExportFormat.Tsv;
-        if(exportFile.EndsWith("csv", StringComparison.OrdinalIgnoreCase))
-        {
-          exportFormat = AliquotDatabase.ExportFormat.Csv;
-        }
-        using(var writer = new StreamWriter(exportFile))
-        {
-          db.ExportTable(writer, exportLimit, exportFormat);
-        }
-        ShowInfoDialog(
-          string.Format("File up to {0} written to {1}", sExportLimit, System.IO.Path.GetFullPath(exportFile)),
-          "Aliquot DB Table Export");
+        ExportAliquotDbAsync();
       }
       else if (sender == this.buttonOpenExplorer)
       {

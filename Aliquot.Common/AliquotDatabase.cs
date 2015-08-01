@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Numerics;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -234,38 +235,147 @@ namespace Aliquot.Common
 
     public void WriteTree(BigInteger treeBase, BigInteger limit, TextWriter writer)
     {
-      // Build reverse links
-      var reverseLinks = new Dictionary<BigInteger, List<BigInteger>>();
-
-      var query = from link in Links.Values
-        where link.Current <= limit
-        where link.Successor <= limit
-        select link;
-      foreach (var link in query)
+      var numbersInTree = new HashSet<BigInteger>();
+      var linksInTree = new HashSet<AliquotChainLink>();
+      for (var i = new BigInteger(2); i <= limit; ++i)
       {
-        BigInteger to = link.Successor;
-        if (!reverseLinks.ContainsKey(to))
+        BigInteger n = i;
+        var numbersForN = new HashSet<BigInteger>();
+        var linksForN = new HashSet<AliquotChainLink>();
+        bool areInTree = false;
+        // Constuct the chain and see if it hits the tree
+        while(true)
         {
-          reverseLinks[to] = new List<BigInteger>();
-        }
-        reverseLinks[to].Add(link.Current);
-      }
+          // If we are at the tree base, then we've hit the tree
+          if(n == treeBase)
+          {
+            areInTree = true;
+            break;
+          }
+          // If we've hit a prime (so successor is 1) without hitting
+          // the tree base, we've missed the tree
+          if(n == 1)
+          {
+            areInTree = false;
+            break;
+          }
+          // If we've hit a number already in the tree, we've hit the tree
+          if(numbersInTree.Contains(n))
+          {
+            areInTree = true;
+            break;
+          }
+          // If we've hit a number already in the chain, we've hit a perfect
+          // number or amicable cycle so we've missed the tree
+          if(numbersForN.Contains(n))
+          {
+            areInTree = false;
+            break;
+          }
+          // If we've gone outside the scope of numbers in the database,
+          // we've missed the tree
+          if(! Links.ContainsKey(n))
+          {
+            areInTree = false;
+            break;
+          }
+          // Keep track of numbers and links so far, and move on to successor
+          AliquotChainLink link = Links[n];
+          numbersForN.Add(n);
+          linksForN.Add(link);
+          n = link.Successor;
+        } // while: true (constructing tree)
 
-      var allNodesInTree = new HashSet<BigInteger>();
-      GatherNodes(reverseLinks, treeBase, allNodesInTree);
+        // If we hit the tree then update numbers and links collection
+        if(areInTree)
+        {
+          numbersInTree.UnionWith(numbersForN);
+          linksInTree.UnionWith(linksForN);
+        }
+      }
 
       // dot -Tpdf file.gv -o file.pdf
 
-      writer.WriteLine("digraph G {");
-      foreach(var node in allNodesInTree)
       {
-        var link = Links[node];
-        WriteBox(writer, link);
-      }
-      var nodesWritten = new HashSet<BigInteger>();
-      OutputLinks(reverseLinks, treeBase, writer, nodesWritten);
-      writer.WriteLine("}");
+        writer.WriteLine("digraph G {");
+        int n = linksInTree.Count;
+        int n100 = n / 100;
+        int c = 0;
+        int i = 0;
+        foreach (var link in linksInTree)
+        {
+          i++;
+          if (c++ == n100)
+          {
+            c = 0;
 
+            // Check for cancellation
+            if (myMaybeCancellationToken.HasValue)
+            {
+              myMaybeCancellationToken.Value.ThrowIfCancellationRequested();
+            }
+
+            // Raise progress message
+            string message = string.Format("Writing Nodes: Read {0:N0} of {1:N0}", i, n);
+            int percent = i * 100 / n;
+            ProgressEventArgs.RaiseEvent(myProgressIndicator, percent, message);
+          }
+
+          WriteBox(writer, link);
+        }
+        i = 0;
+        foreach (var link in linksInTree)
+        {
+          i++;
+          if (c++ == n100)
+          {
+            c = 0;
+
+            // Check for cancellation
+            if (myMaybeCancellationToken.HasValue)
+            {
+              myMaybeCancellationToken.Value.ThrowIfCancellationRequested();
+            }
+
+            // Raise progress message
+            string message = string.Format("Writing Arrows: Read {0:N0} of {1:N0}", i, n);
+            int percent = i * 100 / n;
+            ProgressEventArgs.RaiseEvent(myProgressIndicator, percent, message);
+          }
+
+          WriteArrow(writer, link.Current, link.Successor);
+        }
+
+        // title
+        var colorCounts = new Dictionary<string, int>();
+        foreach (var link in linksInTree)
+        {
+          string color = CalcColor(link.Current, link.Factorisation);
+          if(! colorCounts.ContainsKey(color))
+          {
+            colorCounts[color] = 0;
+          }
+          colorCounts[color] = 1 + colorCounts[color];
+        }
+        var sb = new StringBuilder();
+        foreach(var e in colorCounts)
+        {
+          if (sb.Length > 0) { sb.Append(" "); }
+          sb.Append(e.Key + ":" + e.Value);
+        }
+        string sColorCounts = sb.ToString();
+
+        writer.WriteLine("graph[");
+        writer.WriteLine("fontsize = 24"); // bottom
+        writer.WriteLine("labeljust = \"right\""); // bottom
+        writer.WriteLine("labelloc = \"b\""); // bottom
+        writer.WriteLine("label = \"Aliquot Tree for " + treeBase + 
+          ", limit " + limit +
+          " (" + linksInTree.Count + " non-root numbers) (" + sColorCounts + ")\"");
+        writer.WriteLine("]");
+        writer.WriteLine("}");
+      }
+    
     }
 
     public void WriteChain(BigInteger chainStart, TextWriter writer)
@@ -285,12 +395,51 @@ namespace Aliquot.Common
       // dot -Tpdf file.gv -o file.pdf
 
       writer.WriteLine("digraph G {");
+      int n = chainLinks.Count;
+      int n100 = n / 100;
+      int c = 0;
+      int i = 0;
       foreach (var link in chainLinks)
       {
+        i++;
+        if (c++ == n100)
+        {
+          c = 0;
+
+          // Check for cancellation
+          if (myMaybeCancellationToken.HasValue)
+          {
+            myMaybeCancellationToken.Value.ThrowIfCancellationRequested();
+          }
+
+          // Raise progress message
+          string message = string.Format("Writing Nodes: Read {0:N0} of {1:N0}", i, n);
+          int percent = i * 100 / n;
+          ProgressEventArgs.RaiseEvent(myProgressIndicator, percent, message);
+        }
+
         WriteBox(writer, link);
       }
+      i = 0;
       foreach (var link in chainLinks)
       {
+        i++;
+        if (c++ == n100)
+        {
+          c = 0;
+
+          // Check for cancellation
+          if (myMaybeCancellationToken.HasValue)
+          {
+            myMaybeCancellationToken.Value.ThrowIfCancellationRequested();
+          }
+
+          // Raise progress message
+          string message = string.Format("Writing Arrows: Read {0:N0} of {1:N0}", i, n);
+          int percent = i * 100 / n;
+          ProgressEventArgs.RaiseEvent(myProgressIndicator, percent, message);
+        }
+
         WriteArrow(writer, link.Current, link.Successor);
       }
       writer.WriteLine("}");
@@ -350,39 +499,6 @@ namespace Aliquot.Common
       writer.WriteLine("{0}->{1}" + attributes, current, successor);
     }
 
-    private void GatherNodes(
-      Dictionary<BigInteger, List<BigInteger>> links, 
-      BigInteger current, 
-      HashSet<BigInteger> nodes)
-    {
-      nodes.Add(current);
-      if(! links.ContainsKey(current)) { return; }
-      foreach(BigInteger predecessor in links[current])
-      {
-        if (!nodes.Contains(predecessor))
-        {
-          GatherNodes(links, predecessor, nodes);
-        }
-      }
-    }
-    private void OutputLinks(
-      Dictionary<BigInteger, List<BigInteger>> links, 
-      BigInteger current,
-      TextWriter writer,
-      HashSet<BigInteger> nodesWritten)
-    {
-      if (!links.ContainsKey(current)) { return; }
-      foreach(BigInteger predecessor in links[current])
-      {
-        if(! nodesWritten.Contains(predecessor))
-        {
-          WriteArrow(writer, predecessor, current);
-          nodesWritten.Add(predecessor);
-          OutputLinks(links, predecessor, writer, nodesWritten);
-        }
-      }
-    }
-
     public enum ExportFormat
     {
       Tsv,
@@ -399,24 +515,45 @@ namespace Aliquot.Common
       // Get Aliquot Root Sets by iterating over successors. Note that we may not have
       // all elements for a given root in our collection if the chain has gone above
       // the limit.
+      string desc = string.Format("Getting {0} Aliquot Root Sets", limit);
+      ProgressEventArgs.RaiseEvent(myProgressIndicator, 0, desc);
       var aliquotRootSets = new List<HashSet<BigInteger>>();
+      BigInteger limit100 = limit / 100;
       for (BigInteger n = 2; n <= limit; ++n)
       {
+        // Progress
+        if (n % limit100 == 0)
+        {
+          // Check for cancellation
+          if (myMaybeCancellationToken.HasValue)
+          {
+            myMaybeCancellationToken.Value.ThrowIfCancellationRequested();
+          }
+          BigInteger percent = n * 100 / limit;
+          int nPercent = (int)percent;
+          ProgressEventArgs.RaiseEvent(myProgressIndicator, nPercent, desc);
+        }
+
         if(! Links.ContainsKey(n))
         {
           throw new IndexOutOfRangeException(string.Format("Number {0} not contained in Links for ADB", n));
         }
         BigInteger s = Links[n].Successor;
+
         bool isFound = false;
-        foreach(var aliquotRootSet in aliquotRootSets)        {
-          if (aliquotRootSet.Contains(s))
+        if(s != 1)
+        {
+          foreach (var aliquotRootSet in aliquotRootSets)
           {
-            aliquotRootSet.Add(n);
-            isFound = true;
-            break;
+            if (aliquotRootSet.Contains(s))
+            {
+              aliquotRootSet.Add(n);
+              isFound = true;
+              break;
+            }
           }
         }
-        if(! isFound)
+        if (!isFound)
         {
           aliquotRootSets.Add(new HashSet<BigInteger> { n });
         }
@@ -424,6 +561,7 @@ namespace Aliquot.Common
 
       // Get the Root for each Root Set and merge things in so we have a single set
       // per root
+      ProgressEventArgs.RaiseEvent(myProgressIndicator, 0, "Merging Aliquot Root Sets");
       var aliquotRootSetsByRoot = new Dictionary<BigInteger, HashSet<BigInteger>>();
       foreach(var rootSet in aliquotRootSets)
       {
@@ -458,10 +596,15 @@ namespace Aliquot.Common
       }
 
       // Output table
+      ProgressEventArgs.RaiseEvent(myProgressIndicator, 0, "Output");
       writer.WriteLine("n{0}f{0}r{0}s", delimiter);
       for(BigInteger n = 2; n <= limit; ++n)
       {
-        writer.WriteLine("{0}{1}{2}{1}{3}{1}{4}", n, delimiter, Links[n].Factorisation, aliquotRoots[n], Links[n].Successor);
+        writer.WriteLine("{0}{1}{2}{1}{3}{1}{4}", 
+          n, delimiter, 
+          Links[n].Factorisation,
+          aliquotRoots[n],
+          Links[n].Successor);
       }
 
     }
