@@ -87,7 +87,7 @@ namespace ConsoleAliquot
 
       if(clp.HasOption(OptionName.ExportTable))
       {
-        ExportTable(adbName, sDbLimit);    
+        ExportTable(adbName, "2", sDbLimit);    
       }
 
       if(clp.HasOption(OptionName.GvFindDot))
@@ -182,15 +182,16 @@ namespace ConsoleAliquot
       } // if: isFile
     }
 
-    private static void ExportTable(string adbName, string sDbLimit)
+    private static void ExportTable(string adbName, string sFrom, string sTo)
     {
       // Table Export
       // n, Prime Factors, Aliquot Root, Aliquot Sum
       Console.Out.WriteLine("/*");
       var db = AliquotDatabase.Open(adbName);
       Console.Out.WriteLine("*/");
-      BigInteger dbLimit = BigInteger.Parse(sDbLimit);
-      db.ExportTable(Console.Out, dbLimit, AliquotDatabase.ExportFormat.Tsv);
+      BigInteger nFrom = BigInteger.Parse(sFrom);
+      BigInteger nTo = BigInteger.Parse(sTo);
+      db.ExportTable(Console.Out, nFrom, nTo, AliquotDatabase.ExportFormat.Tsv);
     }
 
     private static bool WarnOfLongOperationAndCheckIfUserWantsToContinue(string description, double time)

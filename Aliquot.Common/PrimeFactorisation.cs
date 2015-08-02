@@ -131,6 +131,32 @@ namespace Aliquot.Common
       return sb.ToString();
     }
 
+    public int DistinctFactorCount
+    {
+      get
+      {
+        int ret = 1;
+        foreach (var factorAndPower in myFactorsAndPowers)
+        {
+          ret *= (1 + factorAndPower.Power);
+        }
+        return ret;
+      }
+    }
+
+    public int ComplexityRating
+    {
+      get
+      {
+        int ret = 0;
+        foreach (var factorAndPower in myFactorsAndPowers)
+        {
+          ret += (1 + factorAndPower.Power);
+        }
+        return ret;
+      }
+    }
+
     /// <summary>
     /// Calculate s(n), the sum of all *proper* divisors of n, where
     /// n is the number that this is a factorisation of. We do

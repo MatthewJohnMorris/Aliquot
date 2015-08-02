@@ -378,14 +378,16 @@ namespace WpfAliquot
     {
       ProgressWindow w = ProgressWindow.CreateWithDescription("Make Tree");
       string adbName = this.textAdbFile.Text;
-      string sExportLimit = this.textExportLimit.Text;
+      string sExportRangeFrom = this.textExportRangeFrom.Text;
+      string sExportRangeTo = this.textExportRangeTo.Text;
       string exportFile = this.textExportFile.Text;
       var handler = w.ProgressReporter;
       var ct = w.CancellationToken;
       Action a = () =>
         {
           var db = AliquotDatabase.Open(adbName, handler, ct);
-          BigInteger exportLimit = BigInteger.Parse(sExportLimit);
+          BigInteger exportRangeFrom = BigInteger.Parse(sExportRangeFrom);
+          BigInteger exportRangeTo = BigInteger.Parse(sExportRangeTo);
           AliquotDatabase.ExportFormat exportFormat = AliquotDatabase.ExportFormat.Tsv;
           if (exportFile.EndsWith("csv", StringComparison.OrdinalIgnoreCase))
           {
@@ -393,14 +395,14 @@ namespace WpfAliquot
           }
           using (var writer = new StreamWriter(exportFile))
           {
-            db.ExportTable(writer, exportLimit, exportFormat);
+            db.ExportTable(writer, exportRangeFrom, exportRangeTo, exportFormat);
           }
         };
       try
       {
         await Task.Run(a);
         ShowInfoDialog(
-          string.Format("File up to {0} written to {1}", sExportLimit, System.IO.Path.GetFullPath(exportFile)),
+          string.Format("File for [{0}, {1}] written to {2}", sExportRangeFrom, sExportRangeTo, System.IO.Path.GetFullPath(exportFile)),
           "Aliquot Db Table Export");
       }
       catch (Exception e)

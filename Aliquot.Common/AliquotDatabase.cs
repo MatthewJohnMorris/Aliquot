@@ -233,6 +233,46 @@ namespace Aliquot.Common
       Utilities.LogLine("ADB Read Time: {0:N2} sec", sec);
     }
 
+    private int GetTreeHeight(HashSet<AliquotChainLink> links, BigInteger treeBase)
+    {
+      var allHeights = new Dictionary<BigInteger, int>();
+      foreach(var link in links)
+      {
+        int height = 0;
+        var n = link.Current;
+        while(n != treeBase)
+        {
+          height++;
+          n = Links[n].Successor;
+          if(allHeights.ContainsKey(n))
+          {
+            height += allHeights[n];
+            break;
+          }
+        }
+        allHeights[link.Current] = height;
+      }
+
+      int maxHeight = 0;
+      foreach (var e in allHeights)
+      {
+        maxHeight = Math.Max(maxHeight, e.Value);
+      }
+      return maxHeight;
+    }
+
+    private static void WriteRuler(string rulername, int height, TextWriter writer)
+    {
+      for (int h = 0; h <= height; ++h)
+      {
+        writer.WriteLine("{0}{1} [shape=record,label=\"<f0>{1}\"];", rulername, h);
+      }
+      for (int h = 0; h < height; ++h)
+      {
+        writer.WriteLine("{0}{1}->{0}{2}", rulername, h + 1, h);
+      }
+    }
+
     public void WriteTree(BigInteger treeBase, BigInteger limit, TextWriter writer)
     {
       var numbersInTree = new HashSet<BigInteger>();
@@ -298,6 +338,16 @@ namespace Aliquot.Common
 
       {
         writer.WriteLine("digraph G {");
+
+        int height = GetTreeHeight(linksInTree, treeBase);
+
+        // left-hand ruler
+        writer.WriteLine("subgraph rulerleft {");
+        WriteRuler("rulerleft", height, writer);
+        writer.WriteLine("}");
+
+        writer.WriteLine("subgraph main {");
+
         int n = linksInTree.Count;
         int n100 = n / 100;
         int c = 0;
@@ -323,6 +373,7 @@ namespace Aliquot.Common
 
           WriteBox(writer, link);
         }
+
         i = 0;
         foreach (var link in linksInTree)
         {
@@ -345,6 +396,12 @@ namespace Aliquot.Common
 
           WriteArrow(writer, link.Current, link.Successor);
         }
+        writer.WriteLine("}"); // main subgraph
+
+        // right-hand ruler
+        writer.WriteLine("subgraph rulerright {");
+        WriteRuler("rulerright", height, writer);
+        writer.WriteLine("}");
 
         // title
         var colorCounts = new Dictionary<string, int>();
@@ -373,6 +430,7 @@ namespace Aliquot.Common
           ", limit " + limit +
           " (" + linksInTree.Count + " non-root numbers) (" + sColorCounts + ")\"");
         writer.WriteLine("]");
+
         writer.WriteLine("}");
       }
     
@@ -508,18 +566,26 @@ namespace Aliquot.Common
     // n, Prime Factors, Aliquot Root, Aliquot Sum
     public void ExportTable(
       TextWriter writer,      
-      BigInteger limit,
+      BigInteger rangeFrom,
+      BigInteger rangeTo,
       ExportFormat exportFormat
       )
     {
-      // Get Aliquot Root Sets by iterating over successors. Note that we may not have
-      // all elements for a given root in our collection if the chain has gone above
-      // the limit.
-      string desc = string.Format("Getting {0} Aliquot Root Sets", limit);
-      ProgressEventArgs.RaiseEvent(myProgressIndicator, 0, desc);
-      var aliquotRootSets = new List<HashSet<BigInteger>>();
-      BigInteger limit100 = limit / 100;
-      for (BigInteger n = 2; n <= limit; ++n)
+      if(rangeFrom < 2)
+      {
+        throw new ArgumentOutOfRangeException("rangeFrom",
+          string.Format("rangeFrom ({0}) below minimum (2)", rangeFrom));
+      }
+      if (rangeFrom > rangeTo)
+      {
+        throw new ArgumentOutOfRangeException("rangeFrom",
+          string.Format("rangeFrom ({0}) above rangeTo ({1})", rangeFrom, rangeTo));
+      }
+
+      var aliquotRoots = new Dictionary<BigInteger, BigInteger>();
+      BigInteger rangeSize = 1 + rangeTo - rangeFrom;
+      BigInteger limit100 = rangeSize / 100;
+      for (BigInteger n = rangeFrom; n <= rangeTo; ++n)
       {
         // Progress
         if (n % limit100 == 0)
@@ -529,60 +595,12 @@ namespace Aliquot.Common
           {
             myMaybeCancellationToken.Value.ThrowIfCancellationRequested();
           }
-          BigInteger percent = n * 100 / limit;
+          BigInteger percent = (n - rangeFrom) * 100 / rangeSize;
           int nPercent = (int)percent;
-          ProgressEventArgs.RaiseEvent(myProgressIndicator, nPercent, desc);
+          ProgressEventArgs.RaiseEvent(myProgressIndicator, nPercent, "Getting Roots");
         }
 
-        if(! Links.ContainsKey(n))
-        {
-          throw new IndexOutOfRangeException(string.Format("Number {0} not contained in Links for ADB", n));
-        }
-        BigInteger s = Links[n].Successor;
-
-        bool isFound = false;
-        if(s != 1)
-        {
-          foreach (var aliquotRootSet in aliquotRootSets)
-          {
-            if (aliquotRootSet.Contains(s))
-            {
-              aliquotRootSet.Add(n);
-              isFound = true;
-              break;
-            }
-          }
-        }
-        if (!isFound)
-        {
-          aliquotRootSets.Add(new HashSet<BigInteger> { n });
-        }
-      }
-
-      // Get the Root for each Root Set and merge things in so we have a single set
-      // per root
-      ProgressEventArgs.RaiseEvent(myProgressIndicator, 0, "Merging Aliquot Root Sets");
-      var aliquotRootSetsByRoot = new Dictionary<BigInteger, HashSet<BigInteger>>();
-      foreach(var rootSet in aliquotRootSets)
-      {
-        BigInteger n = rootSet.First();
-        BigInteger root = GetRootOfChain(n);
-        if (!aliquotRootSetsByRoot.ContainsKey(root))
-        {
-          aliquotRootSetsByRoot[root] = new HashSet<BigInteger>();
-        }
-        aliquotRootSetsByRoot[root].UnionWith(rootSet);
-      }
-
-      // Construct lookup array for roots
-      var aliquotRoots = new Dictionary<BigInteger, BigInteger>();
-      foreach(var rootSetByRoot in aliquotRootSetsByRoot)
-      {
-        var root = rootSetByRoot.Key;
-        foreach(var n in rootSetByRoot.Value)
-        {
-          aliquotRoots[n] = root;
-        }
+        aliquotRoots[n] = GetRootOfChain(n);
       }
 
       string delimiter = "|";
@@ -596,15 +614,76 @@ namespace Aliquot.Common
       }
 
       // Output table
+      // 0: x         the number
+      // 2: p.q        the prime structure eg 2.3
+      // 3: f        the number of factors (prod (power+1))
+      // 4: c       Complexity rating - see wiki
+      // 5: a        Aliquot sum
+      // 6: t        Tree root
+      // 7: l        Length of aliquot sequence
+      // 8: d        Difference between x and a, the number and the aliquot sum
+      // 9: %      d as a percentage to x
+      // 10: g    Geometry, whether the number is a triangular, square or pentagonal number etc
       ProgressEventArgs.RaiseEvent(myProgressIndicator, 0, "Output");
-      writer.WriteLine("n{0}f{0}r{0}s", delimiter);
-      for(BigInteger n = 2; n <= limit; ++n)
+      writer.WriteLine("x{0}p.q{0}f{0}c{0}a{0}t{0}l{0}d{0}%{0}g", delimiter);
+
+      var geometryEnumerators = new Dictionary<int, IEnumerator<BigInteger>>();
+      for(int i = 3; i <= 10; ++i)
       {
-        writer.WriteLine("{0}{1}{2}{1}{3}{1}{4}", 
-          n, delimiter, 
-          Links[n].Factorisation,
-          aliquotRoots[n],
-          Links[n].Successor);
+        IEnumerator<BigInteger> e = GeometryEnumerator.Create(i);
+        e.MoveNext();
+        geometryEnumerators[i] = e;
+      }
+
+      for (BigInteger n = rangeFrom; n <= rangeTo; ++n)
+      {
+        string geometries = "";
+        foreach(var i in geometryEnumerators.Keys)
+        {
+          var e = geometryEnumerators[i];
+          while (e.Current < n) { e.MoveNext(); }
+          if (e.Current == n)
+          {
+            if (geometries.Length > 0) { geometries += ":"; }
+            geometries += i;
+          }
+        }
+
+        int chainLength = 0;
+        BigInteger root = aliquotRoots[n];
+        if(root != 0)
+        {
+          if(root != n)
+          {
+            BigInteger i = n;
+            while(i != root)
+            {
+              chainLength++;
+              i = Links[i].Successor;
+            }
+          }
+        }
+
+        BigInteger aliquotSum = Links[n].Successor;
+        BigInteger aliquotDiff = aliquotSum - n;
+        BigInteger diffPercent100 = 10000 * aliquotDiff / n;
+        var fac = Links[n].Factorisation;
+        int dfc = fac.DistinctFactorCount;
+        int c = fac.ComplexityRating;
+        double diffPercent = double.Parse(diffPercent100.ToString()) / 100.0;
+        writer.WriteLine(
+          "{0}{1}{2}{1}{3}{1}{4}{1}{5}{1}{6}{1}{7}{1}{8}{1}{9:##0.00}{1}{10}",
+          n,                      // 0:x
+          delimiter,
+          Links[n].Factorisation, // 2:p.q
+          dfc - 2,                // 3:f
+          c,                      // 4:c
+          Links[n].Successor,     // 5:a
+          root,                   // 6:t
+          chainLength,            // 7:l
+          aliquotDiff,            // 8:t
+          diffPercent,            // 9:t
+          geometries);            // 10:g
       }
 
     }
