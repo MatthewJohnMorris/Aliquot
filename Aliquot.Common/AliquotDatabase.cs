@@ -563,7 +563,13 @@ namespace Aliquot.Common
       Csv
     }
 
-    // n, Prime Factors, Aliquot Root, Aliquot Sum
+    /// <summary>
+    /// Export information about numbers catered for by the Aliquot DB
+    /// </summary>
+    /// <param name="writer">Stream that info is written to</param>
+    /// <param name="rangeFrom">First number in range</param>
+    /// <param name="rangeTo">Last number in range</param>
+    /// <param name="exportFormat">Which delimiter: Csv:",", Tsv:tab, Psv"|" (default)</param>
     public void ExportTable(
       TextWriter writer,      
       BigInteger rangeFrom,
@@ -582,6 +588,9 @@ namespace Aliquot.Common
           string.Format("rangeFrom ({0}) above rangeTo ({1})", rangeFrom, rangeTo));
       }
 
+      // Get the Aliquot Roots for each element in the range. Here we are
+      // only following links in the Aliquot DB rather than factorising, so
+      // this works *very* quickly.
       var aliquotRoots = new Dictionary<BigInteger, BigInteger>();
       BigInteger rangeSize = 1 + rangeTo - rangeFrom;
       BigInteger limit100 = rangeSize / 100;
@@ -627,6 +636,7 @@ namespace Aliquot.Common
       ProgressEventArgs.RaiseEvent(myProgressIndicator, 0, "Output");
       writer.WriteLine("x{0}p.q{0}f{0}c{0}a{0}t{0}l{0}d{0}%{0}g", delimiter);
 
+      // Set up "Geometry Enumerators": triangular, square, pentagonal etc
       var geometryEnumerators = new Dictionary<int, IEnumerator<BigInteger>>();
       for(int i = 3; i <= 10; ++i)
       {
@@ -637,6 +647,7 @@ namespace Aliquot.Common
 
       for (BigInteger n = rangeFrom; n <= rangeTo; ++n)
       {
+        // See which geometric numbers we are matching
         string geometries = "";
         foreach(var i in geometryEnumerators.Keys)
         {
@@ -649,6 +660,10 @@ namespace Aliquot.Common
           }
         }
 
+        // Calculate chain lengths. While this *could* be done at the
+        // same time as calculating Aliquot Roots, in practice the time
+        // involved is negligable as we are simply following links in a
+        // hash table.
         int chainLength = 0;
         BigInteger root = aliquotRoots[n];
         if(root != 0)
@@ -688,6 +703,14 @@ namespace Aliquot.Common
 
     }
 
+    /// <summary>
+    /// This finds the "Aliquot Root": the terminating element of the onward
+    /// Aliquot Chain from the number supplied. It works with the Aliquot DB links.
+    /// It will deal correctly with arbitrary sized loops, returning the lowest
+    /// element in the loop as the "root".
+    /// </summary>
+    /// <param name="n">Starting point</param>
+    /// <returns>Aliquot root, or 0 if no root can be found</returns>
     private BigInteger GetRootOfChain(BigInteger n)
     {
       var aliquotChain = new HashSet<BigInteger>();
