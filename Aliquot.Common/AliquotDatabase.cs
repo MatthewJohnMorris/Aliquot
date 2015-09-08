@@ -592,6 +592,7 @@ namespace Aliquot.Common
       // only following links in the Aliquot DB rather than factorising, so
       // this works *very* quickly.
       var aliquotRoots = new Dictionary<BigInteger, BigInteger>();
+      var aliquotAscendingLowests = new Dictionary<BigInteger, BigInteger>();
       BigInteger rangeSize = 1 + rangeTo - rangeFrom;
       BigInteger limit100 = rangeSize / 100;
       for (BigInteger n = rangeFrom; n <= rangeTo; ++n)
@@ -609,7 +610,36 @@ namespace Aliquot.Common
           ProgressEventArgs.RaiseEvent(myProgressIndicator, nPercent, "Getting Roots");
         }
 
-        aliquotRoots[n] = GetRootOfChain(n);
+        var root = GetRootOfChain(n);
+        aliquotRoots[n] = root;
+
+        // If no root, keep track of lowest element in the ascending chain
+        if(root == 0)
+        {
+          var set = new HashSet<BigInteger>();
+          BigInteger chainElement = n;
+          BigInteger lowest = chainElement;
+          set.Add(chainElement);
+          if (!aliquotAscendingLowests.ContainsKey(chainElement))
+          {
+            while (Links.ContainsKey(chainElement))
+            {
+              var s = Links[chainElement].Successor;
+              lowest = BigInteger.Min(lowest, s);
+              set.Add(s);
+              chainElement = s;
+            }
+            foreach(var i in set)
+            {
+              BigInteger actualLowest = lowest;
+              if(aliquotAscendingLowests.ContainsKey(i))
+              {
+                actualLowest = BigInteger.Min(actualLowest, aliquotAscendingLowests[i]);
+              }
+              aliquotAscendingLowests[i] = actualLowest;
+            }
+          }
+        }
       }
 
       string delimiter = "|";
@@ -633,8 +663,9 @@ namespace Aliquot.Common
       // 8: d        Difference between x and a, the number and the aliquot sum
       // 9: %      d as a percentage to x
       // 10: g    Geometry, whether the number is a triangular, square or pentagonal number etc
+      // 11: m    Min in ascending chain
       ProgressEventArgs.RaiseEvent(myProgressIndicator, 0, "Output");
-      writer.WriteLine("x{0}p.q{0}f{0}c{0}a{0}t{0}l{0}d{0}%{0}g", delimiter);
+      writer.WriteLine("x{0}p.q{0}f{0}c{0}a{0}t{0}l{0}d{0}%{0}g{0}m", delimiter);
 
       // Set up "Geometry Enumerators": triangular, square, pentagonal etc
       var geometryEnumerators = new Dictionary<int, IEnumerator<BigInteger>>();
@@ -665,6 +696,7 @@ namespace Aliquot.Common
         // involved is negligable as we are simply following links in a
         // hash table.
         int chainLength = 0;
+        BigInteger aliquotAscendingLowest = BigInteger.Zero;
         BigInteger root = aliquotRoots[n];
         if(root != 0)
         {
@@ -678,6 +710,10 @@ namespace Aliquot.Common
             }
           }
         }
+        else
+        {
+          aliquotAscendingLowest = aliquotAscendingLowests[n];
+        }
 
         BigInteger aliquotSum = Links[n].Successor;
         BigInteger aliquotDiff = aliquotSum - n;
@@ -687,18 +723,19 @@ namespace Aliquot.Common
         int c = fac.ComplexityRating;
         double diffPercent = double.Parse(diffPercent100.ToString()) / 100.0;
         writer.WriteLine(
-          "{0}{1}{2}{1}{3}{1}{4}{1}{5}{1}{6}{1}{7}{1}{8}{1}{9:##0.00}{1}{10}",
-          n,                      // 0:x
+          "{0}{1}{2}{1}{3}{1}{4}{1}{5}{1}{6}{1}{7}{1}{8}{1}{9:##0.00}{1}{10}{1}{11}",
+          n,                       // 0:x
           delimiter,
-          Links[n].Factorisation, // 2:p.q
-          dfc - 2,                // 3:f
-          c,                      // 4:c
-          Links[n].Successor,     // 5:a
-          root,                   // 6:t
-          chainLength,            // 7:l
-          aliquotDiff,            // 8:t
-          diffPercent,            // 9:t
-          geometries);            // 10:g
+          Links[n].Factorisation,  // 2:p.q
+          dfc - 2,                 // 3:f
+          c,                       // 4:c
+          Links[n].Successor,      // 5:a
+          root,                    // 6:t
+          chainLength,             // 7:l
+          aliquotDiff,             // 8:t
+          diffPercent,             // 9:t
+          geometries,              // 10:g
+          aliquotAscendingLowest); // 11:m
       }
 
     }
