@@ -8,8 +8,8 @@ namespace Aliquot.Common
 {
   public class ProgressEventArgs : EventArgs
   {
-    public int Percent { get; private set; }
-    public string Message { get; private set; }
+    public readonly int Percent;
+    public readonly string Message;
     public ProgressEventArgs(int percent, string message)
     {
       Percent = percent;
