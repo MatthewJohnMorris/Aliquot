@@ -583,8 +583,8 @@ namespace Aliquot.Common
         // Progress
         if (n % limit100 == 0)
         {
-          // Check for cancellation
-          ThrowIfCancellationRequested();
+            // Check for cancellation
+            ThrowIfCancellationRequested();
 
           BigInteger percent = (n - rangeFrom) * 100 / rangeSize;
           int nPercent = (int)percent;
