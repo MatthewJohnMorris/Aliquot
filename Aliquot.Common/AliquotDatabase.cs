@@ -160,6 +160,15 @@ namespace Aliquot.Common
       Utilities.ReadCompressedFile(path, ret.Reader);
       return ret;
     }
+
+    private void ThrowIfCancellationRequested()
+    {
+      if (myMaybeCancellationToken.HasValue)
+      {
+        myMaybeCancellationToken.Value.ThrowIfCancellationRequested();
+      }
+    }
+
     public void Reader(BinaryReader reader)
     {
       Links = new Dictionary<BigInteger, AliquotChainLink>();
@@ -197,14 +206,7 @@ namespace Aliquot.Common
           c = 0;
 
           // Check for cancellation
-          if (myMaybeCancellationToken.HasValue)
-          {
-            if (myMaybeCancellationToken.Value.IsCancellationRequested)
-            {
-              Console.Out.WriteLine("Cancel request made at " + DateTime.Now.ToString("hh:mm:ss"));
-            }
-            myMaybeCancellationToken.Value.ThrowIfCancellationRequested();
-          }
+          ThrowIfCancellationRequested();
 
           // Raise progress message
           string message = string.Format("AliquotDB: Read {0:N0} of {1:N0}", i, n);
@@ -352,10 +354,7 @@ namespace Aliquot.Common
             c = 0;
 
             // Check for cancellation
-            if (myMaybeCancellationToken.HasValue)
-            {
-              myMaybeCancellationToken.Value.ThrowIfCancellationRequested();
-            }
+            ThrowIfCancellationRequested();
 
             // Raise progress message
             string message = string.Format("Writing Nodes: Read {0:N0} of {1:N0}", i, n);
@@ -375,10 +374,7 @@ namespace Aliquot.Common
             c = 0;
 
             // Check for cancellation
-            if (myMaybeCancellationToken.HasValue)
-            {
-              myMaybeCancellationToken.Value.ThrowIfCancellationRequested();
-            }
+            ThrowIfCancellationRequested();
 
             // Raise progress message
             string message = string.Format("Writing Arrows: Read {0:N0} of {1:N0}", i, n);
@@ -457,10 +453,7 @@ namespace Aliquot.Common
           c = 0;
 
           // Check for cancellation
-          if (myMaybeCancellationToken.HasValue)
-          {
-            myMaybeCancellationToken.Value.ThrowIfCancellationRequested();
-          }
+          ThrowIfCancellationRequested();
 
           // Raise progress message
           string message = string.Format("Writing Nodes: Read {0:N0} of {1:N0}", i, n);
@@ -479,10 +472,7 @@ namespace Aliquot.Common
           c = 0;
 
           // Check for cancellation
-          if (myMaybeCancellationToken.HasValue)
-          {
-            myMaybeCancellationToken.Value.ThrowIfCancellationRequested();
-          }
+          ThrowIfCancellationRequested();
 
           // Raise progress message
           string message = string.Format("Writing Arrows: Read {0:N0} of {1:N0}", i, n);
@@ -594,10 +584,8 @@ namespace Aliquot.Common
         if (n % limit100 == 0)
         {
           // Check for cancellation
-          if (myMaybeCancellationToken.HasValue)
-          {
-            myMaybeCancellationToken.Value.ThrowIfCancellationRequested();
-          }
+          ThrowIfCancellationRequested();
+
           BigInteger percent = (n - rangeFrom) * 100 / rangeSize;
           int nPercent = (int)percent;
           ProgressEventArgs.RaiseEvent(myProgressIndicator, nPercent, "Getting Roots");
