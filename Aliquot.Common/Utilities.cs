@@ -34,14 +34,10 @@ namespace Aliquot.Common
       FileMode fileMode = FileMode.Create)
     {
       using (var fileStream = System.IO.File.Open(path, fileMode))
+      using(var compressedStream = new GZipStream(fileStream, CompressionMode.Compress))
+      using(var writer = new BinaryWriter(compressedStream))
       {
-        using(var compressedStream = new GZipStream(fileStream, CompressionMode.Compress))
-        {
-          using(var writer = new BinaryWriter(compressedStream))
-          {
-            func(writer);
-          }
-        }
+        func(writer);
       }
     }
 
@@ -51,11 +47,9 @@ namespace Aliquot.Common
       FileMode fileMode = FileMode.Create)
     {
       using (var fileStream = System.IO.File.Open(path, fileMode))
+      using (var writer = new BinaryWriter(fileStream))
       {
-        using (var writer = new BinaryWriter(fileStream))
-        {
-          return func(writer);
-        }
+        return func(writer);
       }
     }
 
@@ -66,16 +60,13 @@ namespace Aliquot.Common
       {
         return fs.Name;
       }
-      else
+      GZipStream gfs = writer.BaseStream as GZipStream;
+      if (gfs != null)
       {
-        GZipStream gfs = writer.BaseStream as GZipStream;
-        if (gfs != null)
+        FileStream fs2 = gfs.BaseStream as FileStream;
+        if (fs2 != null)
         {
-          FileStream fs2 = gfs.BaseStream as FileStream;
-          if (fs2 != null)
-          {
-            return fs2.Name + " (gzipped)";
-          }
+          return fs2.Name + " (gzipped)";
         }
       }
       return "(nofile)";
@@ -90,14 +81,10 @@ namespace Aliquot.Common
     public static void ReadCompressedFile(string path, Action<BinaryReader> func)
     {
       using (var fileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+      using (var decompressedStream = new GZipStream(fileStream, CompressionMode.Decompress))
+      using (var reader = new BinaryReader(decompressedStream))
       {
-        using (var decompressedStream = new GZipStream(fileStream, CompressionMode.Decompress))
-        {
-          using (var reader = new BinaryReader(decompressedStream))
-          {
-            func(reader);
-          }
-        }
+        func(reader);
       }
     }
 
@@ -109,11 +96,9 @@ namespace Aliquot.Common
     public static void ReadFile(string path, Action<BinaryReader> func)
     {
       using (var fileStream = File.Open(path, FileMode.Open, FileAccess.Read))
+      using (var reader = new BinaryReader(fileStream))
       {
-        using (var reader = new BinaryReader(fileStream))
-        {
-          func(reader);
-        }
+        func(reader);
       }
     }
 

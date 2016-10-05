@@ -19,7 +19,7 @@ namespace Aliquot.Common
       string tempPath = System.IO.Path.GetTempFileName();
       string tempPath2 = System.IO.Path.GetTempFileName();
       using(new DisposableAction(() => FileUtils.DeleteNoThrow(tempPath)))
-      using (new DisposableAction(() => FileUtils.DeleteNoThrow(tempPath2)))
+      using(new DisposableAction(() => FileUtils.DeleteNoThrow(tempPath2)))
       {
         // First pass just writes primes out to uncompressed temp file
         int numPrimes = Utilities.WriteFileAndReturnValue(
