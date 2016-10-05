@@ -595,6 +595,7 @@ namespace Aliquot.Common
       var aliquotAscendingLowests = new Dictionary<BigInteger, BigInteger>();
       BigInteger rangeSize = 1 + rangeTo - rangeFrom;
       BigInteger limit100 = rangeSize / 100;
+      if (limit100 == 0) { limit100 = 1; }
       for (BigInteger n = rangeFrom; n <= rangeTo; ++n)
       {
         // Progress
@@ -616,31 +617,44 @@ namespace Aliquot.Common
         // If no root, keep track of lowest element in the ascending chain
         if(root == 0)
         {
-          var set = new HashSet<BigInteger>();
           BigInteger chainElement = n;
-          BigInteger lowest = chainElement;
-          set.Add(chainElement);
           if (!aliquotAscendingLowests.ContainsKey(chainElement))
           {
+            // First, get the entire ascending chain
+            var ascendingChain = new HashSet<BigInteger>();
+            ascendingChain.Add(chainElement);
+            BigInteger lowestInAscendingChain = chainElement;
             while (Links.ContainsKey(chainElement))
             {
               var s = Links[chainElement].Successor;
-              lowest = BigInteger.Min(lowest, s);
-              set.Add(s);
+              lowestInAscendingChain = BigInteger.Min(lowestInAscendingChain, s);
+              ascendingChain.Add(s);
               chainElement = s;
             }
-            foreach(var i in set)
+
+            // Now get the lowest element that's either in the chain
+            // or is already at-lowest for another chain hitting this chain.
+            BigInteger lowestInOrLeadingToAscendingChain = lowestInAscendingChain;
+            foreach (var i in ascendingChain)
             {
-              BigInteger actualLowest = lowest;
               if(aliquotAscendingLowests.ContainsKey(i))
               {
-                actualLowest = BigInteger.Min(actualLowest, aliquotAscendingLowests[i]);
-              }
-              aliquotAscendingLowests[i] = actualLowest;
-            }
-          }
-        }
-      }
+                lowestInOrLeadingToAscendingChain =
+                  BigInteger.Min(
+                    lowestInOrLeadingToAscendingChain,
+                    aliquotAscendingLowests[i]);
+              } // if: element has already appeared in another ascending chain
+            } // foreach: element in ascending chain
+
+            // Now update every chain element 
+            foreach (var i in ascendingChain)
+            {
+              aliquotAscendingLowests[i] = lowestInOrLeadingToAscendingChain;
+            } // foreach: element in ascending chain
+          } // if: element has not already been processed in another ascending chain
+        } // if: element is in ascending chain
+
+      } // for: all numbers
 
       string delimiter = "|";
       if(exportFormat == ExportFormat.Csv)
