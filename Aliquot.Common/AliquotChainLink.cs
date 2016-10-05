@@ -12,10 +12,10 @@ namespace Aliquot.Common
     /// <summary>
     /// Properties
     /// </summary>
-    public BigInteger Current { get; private set; }
-    public BigInteger Successor { get; private set; }
-    public PrimeFactorisation Factorisation { get; private set; }
-    public Exception Exception { get; private set; }
+    public readonly BigInteger Current;
+    public readonly BigInteger Successor;
+    public readonly PrimeFactorisation Factorisation;
+    public readonly Exception Exception;
 
     public AliquotChainLink(BigInteger current, BigInteger successor, PrimeFactorisation factorisation)
     {
@@ -33,18 +33,13 @@ namespace Aliquot.Common
       Exception = null;
       try
       {
-        Init(p);
+        Factorisation = new PrimeFactorisation(p, Current);
+        Successor = Factorisation.SumAllProperDivisors();
       }
       catch(Exception e)
       {
         Exception = e;
       }
-    }
-
-    private void Init(IPrimes p)
-    {
-      Factorisation = new PrimeFactorisation(p, Current);
-      Successor = Factorisation.SumAllProperDivisors();
     }
 
   }
