@@ -8,7 +8,7 @@ namespace ConsoleAliquot
 {
   internal class CommandLineParser
   {
-    public IDictionary<OptionName, string> OptionValues { get; private set; }
+    public readonly IDictionary<OptionName, string> OptionValues;
     public enum OptionName
     {
       Undefined,
