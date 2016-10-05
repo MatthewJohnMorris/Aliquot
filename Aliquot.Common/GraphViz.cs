@@ -47,16 +47,16 @@ namespace Aliquot.Common
       var files = new List<string>(Directory.GetFiles(pathProgramFilesX86, fileToFind, SearchOption.AllDirectories));
       if(files.Count == 0)
       {
-        throw new FileNotFoundException(string.Format("Could not find [{0}] in [{1}]", fileToFind, pathProgramFilesX86));
+        throw new FileNotFoundException("Could not find [{0}] in [{1}]".FormatWith(fileToFind, pathProgramFilesX86));
       }
       int nInput = userInput(files);
       if(nInput < 0)
       {
-        throw new IndexOutOfRangeException("Input ({0}) is less than minimum allowed (0)".Format(nInput));
+        throw new IndexOutOfRangeException("Input ({0}) is less than minimum allowed (0)".FormatWith(nInput));
       }
       if (nInput >= files.Count)
       {
-        throw new IndexOutOfRangeException("Input ({0}) is greater than maximum allowed ({1})".Format(nInput, files.Count - 1));
+        throw new IndexOutOfRangeException("Input ({0}) is greater than maximum allowed ({1})".FormatWith(nInput, files.Count - 1));
       }
       using(var w = new StreamWriter(GraphViz.FileNameGvDotLocation))
       {
@@ -124,17 +124,17 @@ namespace Aliquot.Common
             maybeCancellationToken.Value.ThrowIfCancellationRequested();
           }
           int percent = i * 100 / numTries;
-          var message = "Waiting for dot.exe: {0} / {1} sec".Format(i, numTries);
+          var message = "Waiting for dot.exe: {0} / {1} sec".FormatWith(i, numTries);
           ProgressEventArgs.RaiseEvent(progressIndicator, percent, message);
         }
         if (!exeProcess.HasExited)
         {
           exeProcess.Kill(); // kill as we are not going to try any longer!
-          throw new TimeoutException("Has not exited after timeout of {0} sec: [{1} {2}]".Format(numTries, gvdotLocation, arguments));
+          throw new TimeoutException("Has not exited after timeout of {0} sec: [{1} {2}]".FormatWith(numTries, gvdotLocation, arguments));
         }
         if(exeProcess.ExitCode != 0)
         {
-          throw new InvalidDataException("Non-zero exit code {0} from [{1} {2}]".Format(exeProcess.ExitCode, gvdotLocation, arguments));
+          throw new InvalidDataException("Non-zero exit code {0} from [{1} {2}]".FormatWith(exeProcess.ExitCode, gvdotLocation, arguments));
         }
       } // using: process
     }

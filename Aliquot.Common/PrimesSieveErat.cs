@@ -132,7 +132,7 @@ namespace Aliquot.Common
             ProgressEventArgs.RaiseEvent(
               progressIndicator, 
               percent,
-              "PrimesSieveErat sieving {0} from [2,{1}]".Format(i, maxPrime));
+              "PrimesSieveErat sieving {0} from [2,{1}]".FormatWith(i, maxPrime));
           }
 
           if (!eliminated[i])

@@ -12,7 +12,7 @@ namespace Aliquot.Common
     public static void Log(string s, params object[] ao) { Trace.Write(string.Format(s, ao)); }
     public static void LogLine(string s, params object[] ao) { Trace.WriteLine(string.Format(s, ao)); }
 
-    public static string Format(this string s, params object[] ao) { return string.Format(s, ao); }
+    public static string FormatWith(this string s, params object[] ao) { return string.Format(s, ao); }
 
     /// <summary>
     /// Output to a compressed file. This function manages the compression, feeding

@@ -16,7 +16,7 @@ namespace Aliquot.Common
 
     public override string ToString()
     {
-      return "PrimesFromFile: {0:N0} primes, highest {1:N0}".Format(myPrimes.Length, myPrimes.Last());
+      return "PrimesFromFile: {0:N0} primes, highest {1:N0}".FormatWith(myPrimes.Length, myPrimes.Last());
     }
 
     public PrimesFromFile(
@@ -56,7 +56,7 @@ namespace Aliquot.Common
           }
 
           // Raise progress message
-          string message = "PrimesFromFile: Read {0:N0} of {1:N0}".Format(i, n);
+          string message = "PrimesFromFile: Read {0:N0} of {1:N0}".FormatWith(i, n);
           BigInteger b_i = i;
           BigInteger b_n = n;
           BigInteger b_percent = b_i * 100 / b_n;
