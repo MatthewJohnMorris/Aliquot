@@ -9,6 +9,7 @@ namespace Aliquot.Common.Test
     public static IPrimes AssembleFromFile(int maxPrime)
     {
       string tempFileName = System.IO.Path.GetTempFileName();
+      FileUtils.DeleteNoThrow(tempFileName);
       IPrimes ret = null;
       try
       {

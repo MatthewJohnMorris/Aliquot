@@ -18,7 +18,8 @@ namespace Aliquot.Common
     {
       string tempPath = System.IO.Path.GetTempFileName();
       string tempPath2 = System.IO.Path.GetTempFileName();
-      try
+      using(new DisposableAction(() => FileUtils.DeleteNoThrow(tempPath)))
+      using (new DisposableAction(() => FileUtils.DeleteNoThrow(tempPath2)))
       {
         // First pass just writes primes out to uncompressed temp file
         int numPrimes = Utilities.WriteFileAndReturnValue(
@@ -43,15 +44,6 @@ namespace Aliquot.Common
 
         // Finally rename
         File.Move(tempPath2, path);
-      }
-      finally
-      {
-        // Make sure the temp file is deleted, it's about half a Gig!
-        try
-        {
-          File.Delete(tempPath);
-        }
-        catch(Exception) {}
       }
     }
 

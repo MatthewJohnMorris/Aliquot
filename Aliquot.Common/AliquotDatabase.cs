@@ -104,21 +104,13 @@ namespace Aliquot.Common
     public void SaveAs(string path)
     {
       string tempPath = System.IO.Path.GetTempFileName();
-      try
+      using(new DisposableAction(() => FileUtils.DeleteNoThrow(tempPath)))
       {
         // Write file out to temporary location
         Utilities.WriteCompressedFile(tempPath, Writer);
 
         // Finally rename
         File.Move(tempPath, path);
-      }
-      finally
-      {
-        try
-        {
-          File.Delete(tempPath);
-        }
-        catch (Exception) { }
       }
     }
     private void Writer(BinaryWriter writer)
