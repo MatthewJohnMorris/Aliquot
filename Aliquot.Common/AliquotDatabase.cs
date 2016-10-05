@@ -89,7 +89,7 @@ namespace Aliquot.Common
 
           double s = (DateTime.UtcNow - dtStart).TotalSeconds;
           double expected = s * (dbLimit - i) / i;
-          ProgressEventArgs.RaiseEvent(progressIndicator, newProgress, string.Format("ADB: i {0} Time Used (min) {1:N} Estimated time Left (min) {2:N}", i, s/60.0, expected/60.0));
+          ProgressEventArgs.RaiseEvent(progressIndicator, newProgress, "ADB: i {0} Time Used (min) {1:N} Estimated time Left (min) {2:N}".Format(i, s/60.0, expected/60.0));
           progress = newProgress;
         }
       }
@@ -209,7 +209,7 @@ namespace Aliquot.Common
           ThrowIfCancellationRequested();
 
           // Raise progress message
-          string message = string.Format("AliquotDB: Read {0:N0} of {1:N0}", i, n);
+          string message = "AliquotDB: Read {0:N0} of {1:N0}".Format(i, n);
           BigInteger b_i = i;
           BigInteger b_n = n;
           BigInteger b_percent = b_i * 100 / b_n;
@@ -357,7 +357,7 @@ namespace Aliquot.Common
             ThrowIfCancellationRequested();
 
             // Raise progress message
-            string message = string.Format("Writing Nodes: Read {0:N0} of {1:N0}", i, n);
+            string message = "Writing Nodes: Read {0:N0} of {1:N0}".Format(i, n);
             int percent = i * 100 / n;
             ProgressEventArgs.RaiseEvent(myProgressIndicator, percent, message);
           }
@@ -377,7 +377,7 @@ namespace Aliquot.Common
             ThrowIfCancellationRequested();
 
             // Raise progress message
-            string message = string.Format("Writing Arrows: Read {0:N0} of {1:N0}", i, n);
+            string message = "Writing Arrows: Read {0:N0} of {1:N0}".Format(i, n);
             int percent = i * 100 / n;
             ProgressEventArgs.RaiseEvent(myProgressIndicator, percent, message);
           }
@@ -456,7 +456,7 @@ namespace Aliquot.Common
           ThrowIfCancellationRequested();
 
           // Raise progress message
-          string message = string.Format("Writing Nodes: Read {0:N0} of {1:N0}", i, n);
+          string message = "Writing Nodes: Read {0:N0} of {1:N0}".Format(i, n);
           int percent = i * 100 / n;
           ProgressEventArgs.RaiseEvent(myProgressIndicator, percent, message);
         }
@@ -475,7 +475,7 @@ namespace Aliquot.Common
           ThrowIfCancellationRequested();
 
           // Raise progress message
-          string message = string.Format("Writing Arrows: Read {0:N0} of {1:N0}", i, n);
+          string message = "Writing Arrows: Read {0:N0} of {1:N0}".Format(i, n);
           int percent = i * 100 / n;
           ProgressEventArgs.RaiseEvent(myProgressIndicator, percent, message);
         }
@@ -562,12 +562,12 @@ namespace Aliquot.Common
       if(rangeFrom < 2)
       {
         throw new ArgumentOutOfRangeException("rangeFrom",
-          string.Format("rangeFrom ({0}) below minimum (2)", rangeFrom));
+          "rangeFrom ({0}) below minimum (2)".Format(rangeFrom));
       }
       if (rangeFrom > rangeTo)
       {
         throw new ArgumentOutOfRangeException("rangeFrom",
-          string.Format("rangeFrom ({0}) above rangeTo ({1})", rangeFrom, rangeTo));
+          "rangeFrom ({0}) above rangeTo ({1})".Format(rangeFrom, rangeTo));
       }
 
       // Get the Aliquot Roots for each element in the range. Here we are

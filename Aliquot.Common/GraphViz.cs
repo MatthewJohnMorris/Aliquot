@@ -52,11 +52,11 @@ namespace Aliquot.Common
       int nInput = userInput(files);
       if(nInput < 0)
       {
-        throw new IndexOutOfRangeException(string.Format("Input ({0}) is less than minimum allowed (0)", nInput));
+        throw new IndexOutOfRangeException("Input ({0}) is less than minimum allowed (0)".Format(nInput));
       }
       if (nInput >= files.Count)
       {
-        throw new IndexOutOfRangeException(string.Format("Input ({0}) is greater than maximum allowed ({1})", nInput, files.Count - 1));
+        throw new IndexOutOfRangeException("Input ({0}) is greater than maximum allowed ({1})".Format(nInput, files.Count - 1));
       }
       using(var w = new StreamWriter(GraphViz.FileNameGvDotLocation))
       {
@@ -124,17 +124,17 @@ namespace Aliquot.Common
             maybeCancellationToken.Value.ThrowIfCancellationRequested();
           }
           int percent = i * 100 / numTries;
-          var message = string.Format("Waiting for dot.exe: {0} / {1} sec", i, numTries);
+          var message = "Waiting for dot.exe: {0} / {1} sec".Format(i, numTries);
           ProgressEventArgs.RaiseEvent(progressIndicator, percent, message);
         }
         if (!exeProcess.HasExited)
         {
           exeProcess.Kill(); // kill as we are not going to try any longer!
-          throw new TimeoutException(string.Format("Has not exited after timeout of {0} sec: [{1} {2}]", numTries, gvdotLocation, arguments));
+          throw new TimeoutException("Has not exited after timeout of {0} sec: [{1} {2}]".Format(numTries, gvdotLocation, arguments));
         }
         if(exeProcess.ExitCode != 0)
         {
-          throw new InvalidDataException(string.Format("Non-zero exit code {0} from [{1} {2}]", exeProcess.ExitCode, gvdotLocation, arguments));
+          throw new InvalidDataException("Non-zero exit code {0} from [{1} {2}]".Format(exeProcess.ExitCode, gvdotLocation, arguments));
         }
       } // using: process
     }

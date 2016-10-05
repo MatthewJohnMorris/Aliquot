@@ -69,7 +69,7 @@ namespace Aliquot.Common
             maybeCancellationToken.Value.ThrowIfCancellationRequested();
           }
           int percent = (numPrimes < 100) ? i * 100 / numPrimes : i / (numPrimes / 100);
-          ProgressEventArgs.RaiseEvent(progressIndicator, percent, string.Format("PrimesSieveErat writing primes"));
+          ProgressEventArgs.RaiseEvent(progressIndicator, percent, "PrimesSieveErat writing primes");
         }
         int prime = reader.ReadInt32();
         writer.Write((Int32)prime);
@@ -132,7 +132,7 @@ namespace Aliquot.Common
             ProgressEventArgs.RaiseEvent(
               progressIndicator, 
               percent,
-              string.Format("PrimesSieveErat sieving {0} from [2,{1}]", i, maxPrime));
+              "PrimesSieveErat sieving {0} from [2,{1}]".Format(i, maxPrime));
           }
 
           if (!eliminated[i])
