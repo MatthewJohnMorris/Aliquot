@@ -247,11 +247,7 @@ namespace Aliquot.Common
         allHeights[link.Current] = height;
       }
 
-      int maxHeight = 0;
-      foreach (var e in allHeights)
-      {
-        maxHeight = Math.Max(maxHeight, e.Value);
-      }
+      int maxHeight = allHeights.Aggregate(0, (v, kvp) => Math.Max(v, kvp.Value));
       return maxHeight;
     }
 
@@ -714,7 +710,7 @@ namespace Aliquot.Common
         if(! Links.ContainsKey(n))
         {
           return BigInteger.Zero;
-        } // if: no onward link/successor
+        }
 
         // We are looping - get minimal element of loop
         if (aliquotChain.Contains(n))
@@ -727,20 +723,17 @@ namespace Aliquot.Common
             n = Links[n].Successor;
           }
           // Calculate and return the smallest element
-          var minimumInLoop = n;
-          foreach(var numberInLoop in aliquotLoop)
-          {
-            minimumInLoop = BigInteger.Min(minimumInLoop, numberInLoop);
-          }
+          var minimumInLoop = aliquotLoop.Aggregate(n, (x, e) => BigInteger.Min(x, e));
           return minimumInLoop;
         } // if: a loop
 
-        // It's a prime - this is the root
         BigInteger s = Links[n].Successor;
+
+        // If successor is 1 then it's a prime - this is the root
         if (s == 1)
         {
           return n;
-        } // if: successor is 1 (so this is prime)
+        }
 
         // add to the chain
         aliquotChain.Add(n);
