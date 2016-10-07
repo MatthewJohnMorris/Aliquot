@@ -449,10 +449,10 @@ namespace Aliquot.Common
       TextWriter writer,
       AliquotChainLink link)
     {
-      string node = link.Current.ToString();
-      string factors = link.Factorisation.ToString();
-      string driver = link.Factorisation.Driver();
-      string color = CalcColor(link.Current, link.Factorisation);
+      var node = link.Current;
+      var factors = link.Factorisation;
+      var driver = link.Factorisation.Driver();
+      string color = CalcColor(node, factors);
       if(driver.Length > 0)
       {
         writer.WriteLine("{0} [shape=record,label=\"<f0>{0}|<f1>{1}|<f2>{2}\",color={3}];", node, factors, driver, color);
@@ -462,6 +462,7 @@ namespace Aliquot.Common
         writer.WriteLine("{0} [shape=record,label=\"<f0>{0}|<f1>{1}\",color={2}];", node, factors, color);
       }
     }
+
     private static string CalcColor(BigInteger current, PrimeFactorisation factorisation)
     {
       if(factorisation.FactorsAndPowers.Count == 1)
@@ -485,6 +486,7 @@ namespace Aliquot.Common
       }
       return "green";
     }
+
     private static void WriteArrow(
       TextWriter writer,
       BigInteger current,
