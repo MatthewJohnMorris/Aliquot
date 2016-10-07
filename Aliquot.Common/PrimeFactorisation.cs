@@ -17,14 +17,12 @@ namespace Aliquot.Common
     /// </summary>
     public class FactorAndPower
     {
-      private readonly BigInteger factor;
-      public BigInteger Factor { get { return factor; } }
-      private readonly int power;
-      public int Power { get { return power; } }
+      public readonly BigInteger Factor;
+      public readonly int Power;
       public FactorAndPower(BigInteger factor, int power)
       {
-        this.factor = factor;
-        this.power = power;
+        Factor = factor;
+        Power = power;
       }
       public override string ToString()
       {
@@ -39,15 +37,14 @@ namespace Aliquot.Common
       }
       public FactorAndPower IncrementPower()
       {
-        return new FactorAndPower(factor, power + 1);
+        return new FactorAndPower(Factor, Power + 1);
       }
     }
 
-    private List<FactorAndPower> myFactorsAndPowers;
-    public List<FactorAndPower> FactorsAndPowers { get { return myFactorsAndPowers; } }
+    public readonly List<FactorAndPower> FactorsAndPowers;
     private PrimeFactorisation(List<FactorAndPower> factorsAndPowers)
     {
-      myFactorsAndPowers = factorsAndPowers;
+      FactorsAndPowers = factorsAndPowers;
     }
 
     /// <summary>
@@ -57,7 +54,7 @@ namespace Aliquot.Common
     /// <param name="n">number to factorise</param>
     public PrimeFactorisation(IPrimes primes, BigInteger n)
     {
-      myFactorsAndPowers = new List<FactorAndPower>();
+      FactorsAndPowers = new List<FactorAndPower>();
 
       IEnumerator<BigInteger> e = PrimesEnumerator.Create(primes);
       e.MoveNext();
@@ -94,7 +91,7 @@ namespace Aliquot.Common
           // New prime: write the term for any previous prime out and start again
           if (factorToSave > 0)
           {
-            myFactorsAndPowers.Add(new FactorAndPower(factor: factorToSave, power: powerToSave));
+            FactorsAndPowers.Add(new FactorAndPower(factor: factorToSave, power: powerToSave));
           }
           factorToSave = primeDivisor;
           powerToSave = 1;
@@ -109,7 +106,7 @@ namespace Aliquot.Common
       } // while: residue > 1 (we still have factoring to do)
 
       // We are at the end so write final term out
-      myFactorsAndPowers.Add(new FactorAndPower(factor: factorToSave, power: powerToSave));
+      FactorsAndPowers.Add(new FactorAndPower(factor: factorToSave, power: powerToSave));
 
     }
 
@@ -120,7 +117,7 @@ namespace Aliquot.Common
     public override string ToString()
     {
       var sb = new StringBuilder();
-      foreach(var factorAndPower in myFactorsAndPowers)
+      foreach(var factorAndPower in FactorsAndPowers)
       {
         if(sb.Length > 0)
         {
@@ -135,12 +132,7 @@ namespace Aliquot.Common
     {
       get
       {
-        int ret = 1;
-        foreach (var factorAndPower in myFactorsAndPowers)
-        {
-          ret *= (1 + factorAndPower.Power);
-        }
-        return ret;
+        return FactorsAndPowers.Aggregate(1, (x, fap) => x * (1 + fap.Power));
       }
     }
 
@@ -148,12 +140,7 @@ namespace Aliquot.Common
     {
       get
       {
-        int ret = 0;
-        foreach (var factorAndPower in myFactorsAndPowers)
-        {
-          ret += (1 + factorAndPower.Power);
-        }
-        return ret;
+        return FactorsAndPowers.Aggregate(0, (x, fap) => x + (1 + fap.Power));
       }
     }
 
@@ -174,7 +161,7 @@ namespace Aliquot.Common
       BigInteger result = 1;
       n = 1;
 
-      var factorsAndPowers = myFactorsAndPowers;
+      var factorsAndPowers = FactorsAndPowers;
       int numFactors = factorsAndPowers.Count;
       for (int i = 0; i < numFactors; ++i)
       {
@@ -205,14 +192,7 @@ namespace Aliquot.Common
     {
       get
       {
-        foreach(var fp in myFactorsAndPowers)
-        {
-          if(fp.Power % 2 == 1)
-          {
-            return false;
-          }
-        }
-        return true;
+        return (!FactorsAndPowers.Any(fap => fap.Power % 2 == 1));
       }
     }
 
