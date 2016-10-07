@@ -25,11 +25,27 @@ namespace Aliquot.Common
       Action<BinaryWriter> func,
       FileMode fileMode = FileMode.Create)
     {
-      using (var fileStream = System.IO.File.Open(path, fileMode))
+      using(var fileStream = System.IO.File.Open(path, fileMode))
       using(var compressedStream = new GZipStream(fileStream, CompressionMode.Compress))
       using(var writer = new BinaryWriter(compressedStream))
       {
         func(writer);
+      }
+    }
+
+    /// <summary>
+    /// Read from a compressed file. This function manages the decompression,
+    /// passing a decompressed stream through to the reading function.
+    /// </summary>
+    /// <param name="path">file to read from</param>
+    /// <param name="func">reading function</param>
+    public static void ReadCompressedFile(string path, Action<BinaryReader> func)
+    {
+      using (var fileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+      using (var decompressedStream = new GZipStream(fileStream, CompressionMode.Decompress))
+      using (var reader = new BinaryReader(decompressedStream))
+      {
+        func(reader);
       }
     }
 
@@ -53,31 +69,16 @@ namespace Aliquot.Common
         return fs.Name;
       }
       GZipStream gfs = writer.BaseStream as GZipStream;
-      if (gfs != null)
+      if (gfs == null)
       {
-        FileStream fs2 = gfs.BaseStream as FileStream;
-        if (fs2 != null)
-        {
-          return fs2.Name + " (gzipped)";
-        }
+        return "(not FileStream or GZipStream)";
       }
-      return "(nofile)";
-    }
-
-    /// <summary>
-    /// Read from a compressed file. This function manages the decompression,
-    /// passing a decompressed stream through to the reading function.
-    /// </summary>
-    /// <param name="path">file to read from</param>
-    /// <param name="func">reading function</param>
-    public static void ReadCompressedFile(string path, Action<BinaryReader> func)
-    {
-      using (var fileStream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
-      using (var decompressedStream = new GZipStream(fileStream, CompressionMode.Decompress))
-      using (var reader = new BinaryReader(decompressedStream))
+      FileStream fs2 = gfs.BaseStream as FileStream;
+      if(fs2 == null)
       {
-        func(reader);
+        return "(GZipStream with non-FileStream)";
       }
+      return fs2.Name + " (gzipped)";
     }
 
     /// <summary>

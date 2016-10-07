@@ -165,7 +165,7 @@ namespace ConsoleAliquot
         var db = AliquotDatabase.Open(adbName);
         Console.Out.WriteLine("*/");
         BigInteger dbLimit = BigInteger.Parse(sDbLimit);
-        db.WriteTree(treeBase, dbLimit, writer);
+        db.ConstructAndWriteTree(treeBase, dbLimit, writer);
       }
       finally
       {

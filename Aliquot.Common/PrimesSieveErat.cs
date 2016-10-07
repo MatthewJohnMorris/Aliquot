@@ -24,17 +24,17 @@ namespace Aliquot.Common
         // First pass just writes primes out to uncompressed temp file
         int numPrimes = Utilities.WriteFileAndReturnValue(
           tempPath,
-          (writer) =>
+          writer =>
             PrimesGeneratorSieveErat.GenerateAndWriteOutPrimes(
               writer, maxPrime, progressIndicator, maybeCancellationToken),
           FileMode.Open);
 
         // Second pass re-writes, with #primes header, to compressed file
         Action<BinaryWriter> writerFunction = 
-          (writer) =>
+          writer =>
             Utilities.ReadFile(
               tempPath,
-              (reader) =>
+              reader =>
                 CreateFinalOutput(reader, writer, numPrimes, progressIndicator, maybeCancellationToken)
                 );
         Utilities.WriteCompressedFile(

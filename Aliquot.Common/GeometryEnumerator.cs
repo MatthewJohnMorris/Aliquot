@@ -6,8 +6,16 @@ using System.Text;
 
 namespace Aliquot.Common
 {
+  /// <summary>
+  /// Creates triangular, square, pentagonal etc numbers
+  /// </summary>
   internal class GeometryEnumerator
   {
+    /// <summary>
+    /// Creates a stream of numbers of the "number of sides" required.
+    /// </summary>
+    /// <param name="geometry">The "number of sides": 3=triangular, 4=square, and so on</param>
+    /// <returns>An enumerator that provides a stream of numbers</returns>
     public static IEnumerator<BigInteger> Create(int geometry)
     {
       int coefficient2 = geometry - 2;

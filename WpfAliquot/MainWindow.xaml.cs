@@ -155,7 +155,7 @@ namespace WpfAliquot
       var db = AliquotDatabase.Open(adbName, handler, cancellationToken);
       using (var writer = new StreamWriter(gvOut + ".gv"))
       {
-        db.WriteTree(treeRoot, treeLimit, writer);
+        db.ConstructAndWriteTree(treeRoot, treeLimit, writer);
       }
       GraphViz.RunDotExe(gvOut, "svg", handler, cancellationToken);
     }

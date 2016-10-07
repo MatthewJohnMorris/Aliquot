@@ -267,7 +267,7 @@ namespace Aliquot.Common
       }
     }
 
-    public void WriteTree(BigInteger treeBase, BigInteger limit, TextWriter writer)
+    private HashSet<AliquotChainLink> ConstructTree(BigInteger treeBase, BigInteger limit)
     {
       var numbersInTree = new HashSet<BigInteger>();
       var linksInTree = new HashSet<AliquotChainLink>();
@@ -278,37 +278,36 @@ namespace Aliquot.Common
         var linksForN = new HashSet<AliquotChainLink>();
         bool areInTree = false;
         // Constuct the chain and see if it hits the tree
-        while(true)
+        while (true)
         {
           // If we are at the tree base, then we've hit the tree
-          if(n == treeBase)
+          if (n == treeBase)
           {
             areInTree = true;
             break;
           }
-          // If we've hit a prime (so successor is 1) without hitting
-          // the tree base, we've missed the tree
-          if(n == 1)
+          // If we've hit a prime (so successor is 1), we've missed the tree
+          if (n == 1)
           {
             areInTree = false;
             break;
           }
           // If we've hit a number already in the tree, we've hit the tree
-          if(numbersInTree.Contains(n))
+          if (numbersInTree.Contains(n))
           {
             areInTree = true;
             break;
           }
           // If we've hit a number already in the chain, we've hit a perfect
           // number or amicable cycle so we've missed the tree
-          if(numbersForN.Contains(n))
+          if (numbersForN.Contains(n))
           {
             areInTree = false;
             break;
           }
           // If we've gone outside the scope of numbers in the database,
           // we've missed the tree
-          if(! Links.ContainsKey(n))
+          if (!Links.ContainsKey(n))
           {
             areInTree = false;
             break;
@@ -321,13 +320,18 @@ namespace Aliquot.Common
         } // while: true (constructing tree)
 
         // If we hit the tree then update numbers and links collection
-        if(areInTree)
+        if (areInTree)
         {
           numbersInTree.UnionWith(numbersForN);
           linksInTree.UnionWith(linksForN);
         }
       }
 
+      return linksInTree;
+    }
+
+    private void WriteTree(BigInteger treeBase, BigInteger limit, HashSet<AliquotChainLink> linksInTree, TextWriter writer)
+    {
       // dot -Tpdf file.gv -o file.pdf
 
       {
@@ -341,49 +345,7 @@ namespace Aliquot.Common
         writer.WriteLine("}");
 
         writer.WriteLine("subgraph main {");
-
-        int n = linksInTree.Count;
-        int n100 = n / 100;
-        int c = 0;
-        int i = 0;
-        foreach (var link in linksInTree)
-        {
-          i++;
-          if (c++ == n100)
-          {
-            c = 0;
-
-            // Check for cancellation
-            ThrowIfCancellationRequested();
-
-            // Raise progress message
-            string message = "Writing Nodes: Read {0:N0} of {1:N0}".FormatWith(i, n);
-            int percent = i * 100 / n;
-            ProgressEventArgs.RaiseEvent(myProgressIndicator, percent, message);
-          }
-
-          WriteBox(writer, link);
-        }
-
-        i = 0;
-        foreach (var link in linksInTree)
-        {
-          i++;
-          if (c++ == n100)
-          {
-            c = 0;
-
-            // Check for cancellation
-            ThrowIfCancellationRequested();
-
-            // Raise progress message
-            string message = "Writing Arrows: Read {0:N0} of {1:N0}".FormatWith(i, n);
-            int percent = i * 100 / n;
-            ProgressEventArgs.RaiseEvent(myProgressIndicator, percent, message);
-          }
-
-          WriteArrow(writer, link.Current, link.Successor);
-        }
+        WriteLinks(linksInTree, writer);
         writer.WriteLine("}"); // main subgraph
 
         // right-hand ruler
@@ -396,14 +358,14 @@ namespace Aliquot.Common
         foreach (var link in linksInTree)
         {
           string color = CalcColor(link.Current, link.Factorisation);
-          if(! colorCounts.ContainsKey(color))
+          if (!colorCounts.ContainsKey(color))
           {
             colorCounts[color] = 0;
           }
           colorCounts[color] = 1 + colorCounts[color];
         }
         var sb = new StringBuilder();
-        foreach(var e in colorCounts)
+        foreach (var e in colorCounts)
         {
           if (sb.Length > 0) { sb.Append(" "); }
           sb.Append(e.Key + ":" + e.Value);
@@ -414,7 +376,7 @@ namespace Aliquot.Common
         writer.WriteLine("fontsize = 24"); // bottom
         writer.WriteLine("labeljust = \"right\""); // bottom
         writer.WriteLine("labelloc = \"b\""); // bottom
-        writer.WriteLine("label = \"Aliquot Tree for " + treeBase + 
+        writer.WriteLine("label = \"Aliquot Tree for " + treeBase +
           ", limit " + limit +
           " (" + linksInTree.Count + " non-root numbers) (" + sColorCounts + ")\"");
         writer.WriteLine("]");
@@ -422,6 +384,47 @@ namespace Aliquot.Common
         writer.WriteLine("}");
       }
     
+    }
+
+    /// <summary>
+    /// Construct and write the Aliquot Tree with the given base
+    /// </summary>
+    public void ConstructAndWriteTree(BigInteger treeBase, BigInteger limit, TextWriter writer)
+    {
+      var linksInTree = ConstructTree(treeBase, limit);
+      WriteTree(treeBase, limit, linksInTree, writer);
+    }
+
+    private void WriteLinks(ICollection<AliquotChainLink> links, TextWriter writer)
+    {
+      ProcessLinks(links, link => WriteBox(writer, link));
+      ProcessLinks(links, link => WriteArrow(writer, link.Current, link.Successor));
+    }
+
+    private void ProcessLinks(ICollection<AliquotChainLink> links, Action<AliquotChainLink> action)
+    {
+      int n = links.Count;
+      int n100 = n / 100;
+      int c = 0;
+      int i = 0;
+      foreach (var link in links)
+      {
+        i++;
+        if (c++ == n100)
+        {
+          c = 0;
+
+          // Check for cancellation
+          ThrowIfCancellationRequested();
+
+          // Raise progress message
+          string message = "Writing Nodes: Read {0:N0} of {1:N0}".FormatWith(i, n);
+          int percent = i * 100 / n;
+          ProgressEventArgs.RaiseEvent(myProgressIndicator, percent, message);
+        }
+
+        action(link);
+      }
     }
 
     public void WriteChain(BigInteger chainStart, TextWriter writer)
@@ -441,47 +444,7 @@ namespace Aliquot.Common
       // dot -Tpdf file.gv -o file.pdf
 
       writer.WriteLine("digraph G {");
-      int n = chainLinks.Count;
-      int n100 = n / 100;
-      int c = 0;
-      int i = 0;
-      foreach (var link in chainLinks)
-      {
-        i++;
-        if (c++ == n100)
-        {
-          c = 0;
-
-          // Check for cancellation
-          ThrowIfCancellationRequested();
-
-          // Raise progress message
-          string message = "Writing Nodes: Read {0:N0} of {1:N0}".FormatWith(i, n);
-          int percent = i * 100 / n;
-          ProgressEventArgs.RaiseEvent(myProgressIndicator, percent, message);
-        }
-
-        WriteBox(writer, link);
-      }
-      i = 0;
-      foreach (var link in chainLinks)
-      {
-        i++;
-        if (c++ == n100)
-        {
-          c = 0;
-
-          // Check for cancellation
-          ThrowIfCancellationRequested();
-
-          // Raise progress message
-          string message = "Writing Arrows: Read {0:N0} of {1:N0}".FormatWith(i, n);
-          int percent = i * 100 / n;
-          ProgressEventArgs.RaiseEvent(myProgressIndicator, percent, message);
-        }
-
-        WriteArrow(writer, link.Current, link.Successor);
-      }
+      WriteLinks(chainLinks, writer);
       writer.WriteLine("}");
 
     }

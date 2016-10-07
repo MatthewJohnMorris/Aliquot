@@ -9,9 +9,6 @@ namespace Aliquot.Common
   /// </summary>
   public class AliquotChainLink
   {
-    /// <summary>
-    /// Properties
-    /// </summary>
     public readonly BigInteger Current;
     public readonly BigInteger Successor;
     public readonly PrimeFactorisation Factorisation;
@@ -22,15 +19,11 @@ namespace Aliquot.Common
       Current = current;
       Successor = successor;
       Factorisation = factorisation;
-      Exception = null;
     }
 
     public AliquotChainLink(IPrimes p, BigInteger n)
     {
       Current = n;
-      Successor = 0;
-      Factorisation = null;
-      Exception = null;
       try
       {
         Factorisation = new PrimeFactorisation(p, Current);
