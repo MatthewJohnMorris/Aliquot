@@ -44,24 +44,39 @@ namespace Aliquot.Common
       var pathProgramFilesX86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
       string fileToFind = "dot.exe";
       Console.Out.WriteLine("Searching for [{0}] in [{1}]", fileToFind, pathProgramFilesX86);
-      var files = new List<string>(Directory.GetFiles(pathProgramFilesX86, fileToFind, SearchOption.AllDirectories));
-      if(files.Count == 0)
+      var subDirs = Directory.GetDirectories(pathProgramFilesX86);
+      foreach(var subDir in subDirs)
       {
-        throw new FileNotFoundException("Could not find [{0}] in [{1}]".FormatWith(fileToFind, pathProgramFilesX86));
+        var files = new List<string>();
+        try
+        {
+          files = new List<string>(Directory.GetFiles(subDir, fileToFind, SearchOption.AllDirectories));
+        }
+        catch(UnauthorizedAccessException _)
+        {
+          // do nothing
+        }
+        if(files.Count == 0)
+        {
+          continue;
+        }
+
+        int nInput = userInput(files);
+        if (nInput < 0)
+        {
+          throw new IndexOutOfRangeException("Input ({0}) is less than minimum allowed (0)".FormatWith(nInput));
+        }
+        if (nInput >= files.Count)
+        {
+          throw new IndexOutOfRangeException("Input ({0}) is greater than maximum allowed ({1})".FormatWith(nInput, files.Count - 1));
+        }
+        using (var w = new StreamWriter(GraphViz.FileNameGvDotLocation))
+        {
+          w.WriteLine(files[nInput]);
+        }
+        return;
       }
-      int nInput = userInput(files);
-      if(nInput < 0)
-      {
-        throw new IndexOutOfRangeException("Input ({0}) is less than minimum allowed (0)".FormatWith(nInput));
-      }
-      if (nInput >= files.Count)
-      {
-        throw new IndexOutOfRangeException("Input ({0}) is greater than maximum allowed ({1})".FormatWith(nInput, files.Count - 1));
-      }
-      using(var w = new StreamWriter(GraphViz.FileNameGvDotLocation))
-      {
-        w.WriteLine(files[nInput]);
-      }
+      throw new FileNotFoundException("Could not find [{0}] in [{1}]".FormatWith(fileToFind, pathProgramFilesX86));
     }
 
     public static bool HasDotExeLocation()
